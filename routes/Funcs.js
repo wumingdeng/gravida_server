@@ -29,7 +29,10 @@ tour_router.route('/getVisits').get(function(req,res){
     })
 });
 
-tour_router.route('/getOrders').get(function(req,res){
+tour_router.route('/getOrders').post(function(req,res){
+    var offset = req.body.offset
+    var limit = req.body.limit
+    console.log(offset)
     db.orders.findAll().then(function(data){
         res.json({d:data});
     })

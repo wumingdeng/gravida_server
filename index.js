@@ -19,7 +19,14 @@ app.use(express.static(path.join(__dirname, 'static')));
 //app.get('/',function(req,res){
 //    res.write("<html><h1>svn</h1></html>");
 //});
-
+app.all('*', function(req, res, next) {
+    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");
+    res.header("X-Powered-By",'Express')
+    res.header("Content-Type", "application/json;charset=utf-8");
+    next();
+});
 // middleware register
 
 // api router
