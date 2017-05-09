@@ -3,6 +3,5 @@
  */
 
 module.exports={
-    Funcs:require('./Funcs'),
-    Init:require('./init')
+    Funcs:require('./Funcs')
 }

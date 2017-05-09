@@ -11,8 +11,6 @@ tour_router.route('/getAdmins').get(function(req,res){
 tour_router.route('/saveAdmin').post(function(req,res){
     var un = req.body.un
     var pw = req.body.pw
-
-
     db.admins.upsert().then(function(data){
         res.json({d:data});
     })
