@@ -1,0 +1,9 @@
+{
+  "development": {
+    "username": "root",
+    "password": "2932615qian",
+    "database": "gravida",
+    "host": "121.40.254.174",
+    "dialect": "mysql"
+  }
+}

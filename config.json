@@ -1,0 +1,12 @@
+{
+    "dbaddr":"121.40.254.174",
+    "port":"3306",
+    "user":"root",
+    "pass":"2932615qian",
+    "dbname":"gravida",
+    "dialect":"mysql",
+    "poolsize":5,
+    "listen":8072,
+    "ws":0
+}
+
