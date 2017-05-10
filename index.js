@@ -55,6 +55,8 @@ var server = app.listen(app.get('port'), function() {
     console.log('server listening on port ' + server.address().port);
 });
 
-// db.orders.findAll().then(function(data){
+// for(var i=0;i<100;i++){
+//   db.orders.update({status:0},{where:{id:i}}).then(function(data){
 //         console.log(data)
 //     })
+// }

@@ -30,16 +30,27 @@ tour_router.route('/getVisits').get(function(req,res){
 });
 
 tour_router.route('/getOrders').post(function(req,res){
-    var offset = req.body.offset
-    var limit = req.body.limit
-    console.log(offset)
-    db.orders.findAll().then(function(data){
+    var os = req.body.offset
+    var lmt = req.body.limit
+    db.orders.findAndCountAll({offset:os,limit:lmt}).then(function(data){
         res.json({d:data});
     })
 });
 
-tour_router.route('/reloadDbStaticData').get(function(req,res){
-    process.send({ type: 'reloadDbStaticData' });
+tour_router.route('/updateOrders').post(function(req,res){
+    var oid = req.body.id
+    var st = req.body.status
+    db.orders.update({status:st},{where:{id:oid}}).then((data)=>{
+        res.json({ok:1}); 
+    })
 });
+
+tour_router.route('/getOrderByExpNo').post(function(req,res){
+    var eo = req.body.expNo
+    db.orders.findAll({where:{exp_no:eo}}).then(function(data){
+        res.json({d:data}); 
+    })
+});
+
 
 module.exports=tour_router;
