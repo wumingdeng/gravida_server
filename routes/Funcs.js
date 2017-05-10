@@ -37,6 +37,7 @@ tour_router.route('/getOrders').post(function(req,res){
     })
 });
 
+
 tour_router.route('/updateOrders').post(function(req,res){
     var oid = req.body.id
     var st = req.body.status
@@ -45,9 +46,30 @@ tour_router.route('/updateOrders').post(function(req,res){
     })
 });
 
-tour_router.route('/getOrderByExpNo').post(function(req,res){
-    var eo = req.body.expNo
-    db.orders.findAll({where:{exp_no:eo}}).then(function(data){
+tour_router.route('/getOrdersBylike').post(function(req,res){
+    var os = req.body.offset
+    var lmt = req.body.limit
+
+    var value = req.body.v
+    var key = req.body.k
+    var ud = {}
+    switch(key){
+        case "exp_no":
+            ud = {exp_no:value}
+            break;
+        case "name":
+            ud = {name:value}
+            break;
+        case "status":
+            ud = {status:value}
+            break;
+        case "pro_no":
+            ud = {pro_no:value}
+            break;
+        default:
+            break;
+    }
+    db.orders.findAndCountAll({where:ud,offset:os,limit:lmt}).then(function(data){
         res.json({d:data}); 
     })
 });
