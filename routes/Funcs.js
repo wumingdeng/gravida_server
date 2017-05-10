@@ -32,7 +32,8 @@ tour_router.route('/getVisits').get(function(req,res){
 tour_router.route('/getOrders').post(function(req,res){
     var os = req.body.offset
     var lmt = req.body.limit
-    db.orders.findAndCountAll({offset:os,limit:lmt}).then(function(data){
+    var s = req.body.status
+    db.orders.findAndCountAll({where:{status:s},offset:os,limit:lmt}).then(function(data){
         res.json({d:data});
     })
 });
@@ -49,7 +50,6 @@ tour_router.route('/updateOrders').post(function(req,res){
 tour_router.route('/getOrdersBylike').post(function(req,res){
     var os = req.body.offset
     var lmt = req.body.limit
-
     var value = req.body.v
     var key = req.body.k
     var ud = {}
