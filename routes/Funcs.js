@@ -23,8 +23,11 @@ tour_router.route('/delAdmin').get(function(req,res){
     })
 });
 
-tour_router.route('/getVisits').get(function(req,res){
-    db.visits.findAll().then(function(data){
+tour_router.route('/getVisits').post(function(req,res){
+    var os = req.body.offset
+    var lmt = req.body.limit
+    var doctorNo = req.body.dn
+    db.visits.findAndCountAll({where:{doctor_no:doctorNo},offset:os,limit:lmt}).then((data)=>{
         res.json({d:data});
     })
 });
@@ -74,5 +77,33 @@ tour_router.route('/getOrdersBylike').post(function(req,res){
     })
 });
 
+
+tour_router.route('/getVisitsBylike').post(function(req,res){
+    var os = req.body.offset
+    var lmt = req.body.limit
+    var value = req.body.v
+    var key = req.body.k
+    var ud = {}
+    switch(key){
+        case "patient_no":
+            ud = {patient_no:value}
+            break;
+        case "content":
+            ud = {content:value}
+            break;
+        default:
+            break;
+    }
+    db.visits.findAndCountAll({where:ud,offset:os,limit:lmt}).then(function(data){
+        res.json({d:data}); 
+    })
+});
+
+tour_router.route('/getReportByNo').post(function(req,res){
+    var no = req.body.no
+    db.reports.findOne({id:no}).then((data)=>{
+        res.json({d:data}); 
+    })
+});
 
 module.exports=tour_router;

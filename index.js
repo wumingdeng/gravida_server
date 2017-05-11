@@ -55,8 +55,9 @@ var server = app.listen(app.get('port'), function() {
     console.log('server listening on port ' + server.address().port);
 });
 
+
 // for(var i=0;i<100;i++){
-//   db.orders.update({status:0},{where:{id:i}}).then(function(data){
-//         console.log(data)
-//     })
+//   db.reports.update({leg_judge:'nice leg',leg_health:'u can go to join malasong'},{where:{id:i}}).then((data)=>{
+
+//   })
 // }
