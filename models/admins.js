@@ -2,7 +2,9 @@
 module.exports = function(sequelize, DataTypes) {
   var admins = sequelize.define('admins', {
     username: DataTypes.STRING,
-    password: DataTypes.STRING
+    password: DataTypes.STRING,
+    familyname: DataTypes.STRING,
+    weight: DataTypes.INTEGER
   }, {
     classMethods: {
       associate: function(models) {

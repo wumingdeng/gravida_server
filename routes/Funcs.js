@@ -2,23 +2,43 @@ var express=require('express');
 var tour_router=express.Router();
 var process = require('process');
 var db = require('../models')
-tour_router.route('/getAdmins').get(function(req,res){
-    db.admins.findAll().then(function(data){
+tour_router.route('/getAdmins').post(function(req,res){
+    var os = req.body.offset
+    var lmt = req.body.limit
+    db.admins.findAndCountAll({offset:os,limit:lmt}).then(function(data){
+        res.json({d:data});
+    })
+});
+
+tour_router.route('/getAdminByName').post(function(req,res){
+    var v = req.body.v
+    var os = req.body.offset
+    var lmt = req.body.limit
+    db.admins.findAndCountAll({where:{familyname:{$like:'%'+v+'%'}},offset:os,limit:lmt}).then(function(data){
         res.json({d:data});
     })
 });
 
 tour_router.route('/saveAdmin').post(function(req,res){
-    var un = req.body.un
-    var pw = req.body.pw
-    db.admins.upsert().then(function(data){
+    var id = req.body.id
+    var un = req.body.username
+    var pw = req.body.password
+    var fn = req.body.familyname
+    var weight = req.body.weight
+    var uData = {}
+    if(id){
+        uData = {id:id,username:un,password:pw,familyname:fn,weight:weight}
+    }else{
+        uData = {username:un,password:pw,familyname:fn,weight:weight}
+    }
+    db.admins.upsert(uData).then(function(data){
         res.json({d:data});
     })
 });
 
-tour_router.route('/delAdmin').get(function(req,res){
-    var un = req.query.un;
-    db.admins.destroy({where:{username:un}}).then(function(data){
+tour_router.route('/delAdmin').post(function(req,res){
+    var id = req.body.id;
+    db.admins.destroy({where:{id:id}}).then(function(data){
         res.json({d:data});
     })
 });
