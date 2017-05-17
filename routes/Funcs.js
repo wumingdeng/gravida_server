@@ -2,7 +2,28 @@ var express=require('express');
 var tour_router=express.Router();
 var process = require('process');
 var db = require('../models')
+
+var redis = require("redis")
+var client = redis.createClient('6379', '127.0.0.1')
+
+client.on("ready",function(error){
+    console.log("ready")
+})
+
+client.on("error",function(error){
+    console.log(error)
+})
+
 tour_router.route('/getAdmins').post(function(req,res){
+    console.log("sess:"+req.sessionID)
+    client.get("sess:"+req.sessionID, function(err, object) {
+        if(err){
+            console.log(err)
+        }else{
+            console.log(object)
+        }
+
+    })
     var os = req.body.offset
     var lmt = req.body.limit
     db.admins.findAndCountAll({offset:os,limit:lmt}).then(function(data){
@@ -121,8 +142,39 @@ tour_router.route('/getVisitsBylike').post(function(req,res){
 
 tour_router.route('/getReportByNo').post(function(req,res){
     var no = req.body.no
-    db.reports.findOne({id:no}).then((data)=>{
+    db.reports.findOne({where:{id:no}}).then((data)=>{
         res.json({d:data}); 
+    })
+});
+
+tour_router.route('/getTodo').get(function(req,res){
+    db.reports.findOne({where:{id:no}}).then((data)=>{
+        res.json({d:data}); 
+    })
+});
+
+tour_router.route('/login').post(function(req,res){
+    console.log("session:"+req.sessionID)
+    var un = req.body.username
+    var pw = req.body.password
+    db.admins.findOne({where:{username:un,password:pw}}).then((data)=>{
+        if(data){
+            req.session.username = un
+            req.session.weight = data.dataValues.weight
+            req.session.login = true
+            res.json({d:data.dataValues,sid:req.sessionID});
+        }
+    })
+});
+
+tour_router.route('/signOut').get(function(req,res){
+    client.get("sess:"+req.sessionID, function(err, object) {
+        if(err){
+            console.log(err)
+        }else{
+            req.session.login = false
+            console.log(object)
+        }
     })
 });
 

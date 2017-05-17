@@ -11,6 +11,34 @@ var cfg = require('./config.json')
 var db = require('./models');
 // api controllers
 var route_table = require('./routes/routeTable');
+
+
+var session = require('express-session');
+var RedisStore = require('connect-redis')(session);
+
+var hour = 3600000
+app.use(session({
+    name:"sid",
+    cookie:{
+        expires:new Date(Date.now() + hour),
+        maxAge:hour,
+    },
+    saveUninitialized : false,
+    resave : true,
+    store: new RedisStore({
+        host:'127.0.0.1',
+        port:'6379'
+    }),
+    secret: 'fizzo'
+}));
+
+app.use(function (req, res, next) {
+    if (!req.session) {
+        return next(new Error('oh no')) // handle error
+    }
+    next()
+})
+
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
 
@@ -20,8 +48,9 @@ app.use(express.static(path.join(__dirname, 'static')));
 //    res.write("<html><h1>svn</h1></html>");
 //});
 app.all('*', function(req, res, next) {
-    res.header("Access-Control-Allow-Origin", "*");
+    res.header("Access-Control-Allow-Origin", "http://192.168.18.165:8010");
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    res.header("Access-Control-Allow-Credentials", true);
     res.header("Access-Control-Allow-Methods","PUT,POST,GET,DELETE,OPTIONS");
     res.header("X-Powered-By",'Express')
     res.header("Content-Type", "application/json;charset=utf-8");
