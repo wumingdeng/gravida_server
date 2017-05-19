@@ -22,7 +22,6 @@ tour_router.route('/getAdmins').post(function(req,res){
         }else{
             console.log(object)
         }
-
     })
     var os = req.body.offset
     var lmt = req.body.limit
@@ -168,6 +167,7 @@ tour_router.route('/login').post(function(req,res){
 });
 
 tour_router.route('/signOut').get(function(req,res){
+    console.log("signOut")
     client.get("sess:"+req.sessionID, function(err, object) {
         if(err){
             console.log(err)
@@ -176,6 +176,8 @@ tour_router.route('/signOut').get(function(req,res){
             console.log(object)
         }
     })
+    console.log("redirect")
+    res.redirect('/login')
 });
 
 module.exports=tour_router;
