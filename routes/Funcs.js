@@ -15,14 +15,6 @@ client.on("error",function(error){
 })
 
 tour_router.route('/getAdmins').post(function(req,res){
-    console.log("sess:"+req.sessionID)
-    client.get("sess:"+req.sessionID, function(err, object) {
-        if(err){
-            console.log(err)
-        }else{
-            console.log(object)
-        }
-    })
     var os = req.body.offset
     var lmt = req.body.limit
     db.admins.findAndCountAll({offset:os,limit:lmt}).then(function(data){
@@ -51,16 +43,40 @@ tour_router.route('/saveAdmin').post(function(req,res){
     }else{
         uData = {username:un,password:pw,familyname:fn,weight:weight}
     }
-    db.admins.upsert(uData).then(function(data){
-        res.json({d:data});
+    console.log("sess:"+req.sessionID)
+    client.get("sess:"+req.sessionID, function(err, object) {
+        if(err){
+            res.json({ok:-1})
+        }else{
+            console.log(object)
+            if(object.weight>0) {
+                db.admins.upsert(uData).then(function(data){
+                    res.json({ok:1,d:data});
+                })
+            }else{
+                res.json({ok:0})
+            }
+        }
     })
+
 });
 
 tour_router.route('/delAdmin').post(function(req,res){
     var id = req.body.id;
-    db.admins.destroy({where:{id:id}}).then(function(data){
-        res.json({d:data});
+    client.get("sess:"+req.sessionID, function(err, object) {
+        if(err){
+            res.json({ok:-1})
+        }else{
+            if(object.weight>0) {
+                db.admins.destroy({where: {id: id}}).then(function (data) {
+                    res.json({ok:1,d: data});
+                })
+            }else{
+                res.json({ok:0})
+            }
+        }
     })
+
 });
 
 tour_router.route('/getVisits').post(function(req,res){
@@ -85,9 +101,21 @@ tour_router.route('/getOrders').post(function(req,res){
 tour_router.route('/updateOrders').post(function(req,res){
     var oid = req.body.id
     var st = req.body.status
-    db.orders.update({status:st},{where:{id:oid}}).then((data)=>{
-        res.json({ok:1}); 
+    client.get("sess:"+req.sessionID, function(err, object) {
+        if(err){
+            res.json({ok:-1})
+        }else{
+            console.log(object)
+            if(object.weight>0){
+                db.orders.update({status:st},{where:{id:oid}}).then((data)=>{
+                    res.json({ok:1});
+                })
+            }else{
+                res.json({ok:0})
+            }
+        }
     })
+
 });
 
 tour_router.route('/getOrdersBylike').post(function(req,res){
@@ -141,8 +169,8 @@ tour_router.route('/getVisitsBylike').post(function(req,res){
 
 tour_router.route('/getReportByNo').post(function(req,res){
     var no = req.body.no
-    db.reports.findOne({where:{id:no}}).then((data)=>{
-        res.json({d:data}); 
+    db.reports.findOne({where:{gravida_no:no}}).then((data)=>{
+        res.json({d:data});
     })
 });
 
@@ -161,7 +189,7 @@ tour_router.route('/login').post(function(req,res){
             req.session.username = un
             req.session.weight = data.dataValues.weight
             req.session.login = true
-            res.json({d:data.dataValues,sid:req.sessionID});
+            res.json({d:data.dataValues});
         }
     })
 });
@@ -176,8 +204,44 @@ tour_router.route('/signOut').get(function(req,res){
             console.log(object)
         }
     })
-    console.log("redirect")
-    res.redirect('/login')
+});
+
+tour_router.route('/getHospitals').get(function(req,res){
+    var os = req.body.offset
+    var lmt = req.body.limit
+    db.hospitals.findAndCountAll({offset:os,limit:lmt}).then(function(data){
+        res.json({d:data});
+    })
+});
+
+tour_router.route('/saveHospitals').get(function(req,res){
+    var id = req.body.id
+    var name = req.body.name
+    var uData = {}
+    if(id){
+        uData = {id:id,name:name}
+    }else{
+        uData = {name:name}
+    }
+    db.hospitals.upsert(uData).then(function(data){
+        res.json({d:data});
+    })
+});
+
+tour_router.route('/delHospitals').get(function(req,res){
+    var id = req.body.id
+    db.hospitals.destroy({where:{id:id}}).then(function(data){
+        res.json({d:data});
+    })
+});
+
+tour_router.route('/getDoctors').get(function(req,res){
+    var os = req.body.offset
+    var lmt = req.body.limit
+    var h_no = req.body.h_no
+    db.hospitals.findAndCountAll({where:{hospital_no:h_no},offset:os,limit:lmt}).then(function(data){
+        res.json({d:data});
+    })
 });
 
 module.exports=tour_router;
