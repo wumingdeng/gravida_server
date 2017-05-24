@@ -2,17 +2,7 @@ var express=require('express');
 var tour_router=express.Router();
 var process = require('process');
 var db = require('../models')
-
-var redis = require("redis")
-var client = redis.createClient('6379', '127.0.0.1')
-
-client.on("ready",function(error){
-    console.log("ready")
-})
-
-client.on("error",function(error){
-    console.log(error)
-})
+var util = require('../uitl.js')
 
 tour_router.route('/getAdmins').post(function(req,res){
     var os = req.body.offset
@@ -43,40 +33,34 @@ tour_router.route('/saveAdmin').post(function(req,res){
     }else{
         uData = {username:un,password:pw,familyname:fn,weight:weight}
     }
-    console.log("sess:"+req.sessionID)
-    client.get("sess:"+req.sessionID, function(err, object) {
-        if(err){
-            res.json({ok:-1})
+    var login = util.checkRedisSessionId(req.sessionID)
+    if(login){
+        if(login.weight>0) {
+            db.admins.upsert(uData).then(function(data){
+                res.json({ok:1,d:data});
+            })
         }else{
-            console.log(object)
-            if(object.weight>0) {
-                db.admins.upsert(uData).then(function(data){
-                    res.json({ok:1,d:data});
-                })
-            }else{
-                res.json({ok:0})
-            }
+            res.json({ok:0})
         }
-    })
-
+    }else{
+        res.json({ok:-1})
+    }
 });
 
 tour_router.route('/delAdmin').post(function(req,res){
     var id = req.body.id;
-    client.get("sess:"+req.sessionID, function(err, object) {
-        if(err){
-            res.json({ok:-1})
+    var login = util.checkRedisSessionId(req.sessionID)
+    if(login){
+        if(login.weight>0) {
+            db.admins.destroy({where: {id: id}}).then(function (data) {
+                res.json({ok:1,d: data});
+            })
         }else{
-            if(object.weight>0) {
-                db.admins.destroy({where: {id: id}}).then(function (data) {
-                    res.json({ok:1,d: data});
-                })
-            }else{
-                res.json({ok:0})
-            }
+            res.json({ok:0})
         }
-    })
-
+    }else{
+        res.json({ok:-1})
+    }
 });
 
 tour_router.route('/getVisits').post(function(req,res){
@@ -101,21 +85,18 @@ tour_router.route('/getOrders').post(function(req,res){
 tour_router.route('/updateOrders').post(function(req,res){
     var oid = req.body.id
     var st = req.body.status
-    client.get("sess:"+req.sessionID, function(err, object) {
-        if(err){
-            res.json({ok:-1})
+    var login = util.checkRedisSessionId(req.sessionID)
+    if(login){
+        if(login.weight>0){
+            db.orders.update({status:st},{where:{id:oid}}).then((data)=>{
+                res.json({ok:1});
+            })
         }else{
-            console.log(object)
-            if(object.weight>0){
-                db.orders.update({status:st},{where:{id:oid}}).then((data)=>{
-                    res.json({ok:1});
-                })
-            }else{
-                res.json({ok:0})
-            }
+            res.json({ok:0})
         }
-    })
-
+    }else{
+        res.json({ok:-1})
+    }
 });
 
 tour_router.route('/getOrdersBylike').post(function(req,res){
@@ -189,24 +170,35 @@ tour_router.route('/login').post(function(req,res){
             req.session.username = un
             req.session.weight = data.dataValues.weight
             req.session.login = true
-            res.json({d:data.dataValues});
+            res.json({ok:1,d:data.dataValues});
+        }else{
+            res.json({ok:0})
         }
     })
 });
 
 tour_router.route('/signOut').get(function(req,res){
     console.log("signOut")
-    client.get("sess:"+req.sessionID, function(err, object) {
-        if(err){
-            console.log(err)
-        }else{
-            req.session.login = false
-            console.log(object)
-        }
+    var login = util.checkRedisSessionId(req.sessionID)
+    if(login){
+        req.session.login = false
+        util.clearSession(req.sessionID)
+    }else{
+
+    }
+    res.json({ok:1})
+});
+
+tour_router.route('/getHospitalsByName').post(function(req,res){
+    var v = req.body.v
+    var os = req.body.offset
+    var lmt = req.body.limit
+    db.hospitals.findAndCountAll({where:{name:{$like:'%'+v+'%'}},offset:os,limit:lmt}).then(function(data){
+        res.json({d:data});
     })
 });
 
-tour_router.route('/getHospitals').get(function(req,res){
+tour_router.route('/getHospitals').post(function(req,res){
     var os = req.body.offset
     var lmt = req.body.limit
     db.hospitals.findAndCountAll({offset:os,limit:lmt}).then(function(data){
@@ -214,7 +206,7 @@ tour_router.route('/getHospitals').get(function(req,res){
     })
 });
 
-tour_router.route('/saveHospitals').get(function(req,res){
+tour_router.route('/saveHospitals').post(function(req,res){
     var id = req.body.id
     var name = req.body.name
     var uData = {}
@@ -228,18 +220,42 @@ tour_router.route('/saveHospitals').get(function(req,res){
     })
 });
 
-tour_router.route('/delHospitals').get(function(req,res){
+tour_router.route('/delHospitals').post(function(req,res){
     var id = req.body.id
     db.hospitals.destroy({where:{id:id}}).then(function(data){
         res.json({d:data});
     })
 });
 
-tour_router.route('/getDoctors').get(function(req,res){
+tour_router.route('/getDoctors').post(function(req,res){
     var os = req.body.offset
     var lmt = req.body.limit
     var h_no = req.body.h_no
-    db.hospitals.findAndCountAll({where:{hospital_no:h_no},offset:os,limit:lmt}).then(function(data){
+    db.doctors.findAndCountAll({where:{hospital_no:h_no},offset:os,limit:lmt}).then(function(data){
+        res.json({d:data});
+    })
+});
+
+tour_router.route('/saveDoctors').post(function(req,res){
+    var id = req.body.id
+    var name = req.body.name
+    var h_no = req.body.h_no
+    var sex = req.body.sex
+    var job = req.body.job
+    var uData = {}
+    if(id){
+        uData = {id:id,name:name,hospital_no:h_no,sex:sex,job:job}
+    }else{
+        uData = {name:name,hospital_no:h_no,sex:sex,job:job}
+    }
+    db.doctors.upsert(uData).then(function(data){
+        res.json({d:data});
+    })
+});
+
+tour_router.route('/delDoctors').post(function(req,res){
+    var id = req.body.id
+    db.doctors.destroy({where:{id:id}}).then(function(data){
         res.json({d:data});
     })
 });
