@@ -26,41 +26,36 @@ tour_router.route('/saveAdmin').post(function(req,res){
     var un = req.body.username
     var pw = req.body.password
     var fn = req.body.familyname
-    var weight = req.body.weight
+    var weight = req.body.weight.toString()
     var uData = {}
     if(id){
         uData = {id:id,username:un,password:pw,familyname:fn,weight:weight}
     }else{
         uData = {username:un,password:pw,familyname:fn,weight:weight}
     }
-    var login = util.checkRedisSessionId(req.sessionID)
-    if(login){
-        if(login.weight>0) {
+    util.checkRedisSessionId(req.sessionID,function(err,object){
+        if(err){
+            res.json({ok:-1})
+        }else{
             db.admins.upsert(uData).then(function(data){
                 res.json({ok:1,d:data});
             })
-        }else{
-            res.json({ok:0})
+
         }
-    }else{
-        res.json({ok:-1})
-    }
+    })
 });
 
 tour_router.route('/delAdmin').post(function(req,res){
     var id = req.body.id;
-    var login = util.checkRedisSessionId(req.sessionID)
-    if(login){
-        if(login.weight>0) {
+    util.checkRedisSessionId(req.sessionID,function(err,object){
+        if(err){
+            res.json({ok:-1})
+        }else{
             db.admins.destroy({where: {id: id}}).then(function (data) {
                 res.json({ok:1,d: data});
             })
-        }else{
-            res.json({ok:0})
         }
-    }else{
-        res.json({ok:-1})
-    }
+    })
 });
 
 tour_router.route('/getVisits').post(function(req,res){
@@ -76,52 +71,35 @@ tour_router.route('/getOrders').post(function(req,res){
     var os = req.body.offset
     var lmt = req.body.limit
     var s = req.body.status
-    db.orders.findAndCountAll({where:{status:s},offset:os,limit:lmt}).then(function(data){
+
+    db.orders.findAndCountAll({where:{status:s},offset:os,limit:lmt,include: [{model: db.goods}]}).then(function(data){
         res.json({d:data});
     })
+
 });
 
 
 tour_router.route('/updateOrders').post(function(req,res){
     var oid = req.body.id
     var st = req.body.status
-    var login = util.checkRedisSessionId(req.sessionID)
-    if(login){
-        if(login.weight>0){
+    util.checkRedisSessionId(req.sessionID,function(err,object){
+        if(err){
+            res.json({ok:-1})
+        }else{
             db.orders.update({status:st},{where:{id:oid}}).then((data)=>{
                 res.json({ok:1});
             })
-        }else{
-            res.json({ok:0})
         }
-    }else{
-        res.json({ok:-1})
-    }
+    })
 });
 
 tour_router.route('/getOrdersBylike').post(function(req,res){
     var os = req.body.offset
     var lmt = req.body.limit
     var value = req.body.v
-    var key = req.body.k
-    var ud = {}
-    switch(key){
-        case "exp_no":
-            ud = {exp_no:value}
-            break;
-        case "name":
-            ud = {name:value}
-            break;
-        case "status":
-            ud = {status:value}
-            break;
-        case "pro_no":
-            ud = {pro_no:value}
-            break;
-        default:
-            break;
-    }
-    db.orders.findAndCountAll({where:ud,offset:os,limit:lmt}).then(function(data){
+    var status = req.body.status
+    var ud=[{custom_phone:{$like:'%'+value+'%'}},{custom:{$like:'%'+value+'%'}},{id:{$like:'%'+value+'%'}}]
+    db.orders.findAndCountAll({where:{$or:ud,$and:{status:status}},offset:os,limit:lmt}).then(function(data){
         res.json({d:data}); 
     })
 });
@@ -157,7 +135,7 @@ tour_router.route('/getReportByNo').post(function(req,res){
 
 tour_router.route('/getTodo').get(function(req,res){
     db.reports.findOne({where:{id:no}}).then((data)=>{
-        res.json({d:data}); 
+        res.json({d:data});
     })
 });
 
@@ -179,13 +157,13 @@ tour_router.route('/login').post(function(req,res){
 
 tour_router.route('/signOut').get(function(req,res){
     console.log("signOut")
-    var login = util.checkRedisSessionId(req.sessionID)
-    if(login){
-        req.session.login = false
-        util.clearSession(req.sessionID)
-    }else{
-
-    }
+    util.checkRedisSessionId(req.sessionID,function(err,object){
+        if(err){
+            res.json({ok:-1})
+        }else{
+            util.clearSession(req.sessionID)
+        }
+    })
     res.json({ok:1})
 });
 

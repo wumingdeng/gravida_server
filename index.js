@@ -6,7 +6,7 @@ var express = require("express");
 var app = express();
 var bodyParser = require('body-parser');
 var path = require('path');
-
+var process = require('process');
 var cfg = require('./config.json')
 var db = require('./models');
 // api controllers
@@ -48,12 +48,11 @@ app.use(express.static(path.join(__dirname, 'static')));
 //    res.write("<html><h1>svn</h1></html>");
 //});
 app.all('*', function(req, res, next) {
-    console.log(req.headers.origin)
-    if( req.headers.origin == 'http://192.168.18.165:8010'
-        || req.headers.origin == 'http://192.168.18.165:8020'
+    if( req.headers.origin == 'http://192.168.18.165'
+        || req.headers.origin == 'http://121.40.254.174'
+        || req.headers.origin == 'http://121.40.254.174:8102'
         || req.headers.origin == 'http://192.168.18.165:8011'
         || req.headers.origin == 'http://192.168.18.165:8012') {
-        // res.header("Access-Control-Allow-Origin", "http://192.168.18.165:8010");
         res.header("Access-Control-Allow-Origin", req.headers.origin);
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
         res.header("Access-Control-Allow-Credentials", true);
@@ -71,6 +70,13 @@ for(var key in route_table){
 }
 
 app.set('port', cfg.listen);
+
+process.on('uncaughtException', function (err) {
+    //打印出错误
+    console.log(err);
+    //打印出错误的调用栈方便调试
+    console.log(err.stack)
+});
 
 
 // // serve pure static assets
@@ -91,9 +97,24 @@ var server = app.listen(app.get('port'), function() {
     console.log('server listening on port ' + server.address().port);
 });
 
-
+// var dt = 1000000000
+// var name = ['无名等','无名灯','唔明邓','唔明等','唔明等','唔明等','唔明等']
+// var name1 = ['体重+足部扫描','仅体重','体重+足部扫描','体重+足部扫描','仅体重','仅体重','体重+足部扫描']
 // for(var i=0;i<100;i++){
-//   db.reports.update({leg_judge:'nice leg',leg_health:'u can go to join malasong'},{where:{id:i}}).then((data)=>{
+//     var statue =  Math.ceil(Math.random()*10)-5
+//     if(statue<0){
+//         statue = 0
+//     }else if(statue>4) {
+//         statue = 4
+//     }
 
-//   })
+    // var ud = {id:dt+i,addr_o:'福建省厦门市思明区',addr_a:'莲花二村观远里48号楼',goods_size:41,goods_color:1,goods_count:1,custom:'吴明灯',custom_phone:'13616063967',pro_no:1,goods_info:'法国老牌珍贵水祛痘神仙水杨酸爽肤水闭口粉刺控油375ml',goods_icon:'https://gd3.alicdn.com/imgextra/i3/77155078/TB2kTrmnJhvOuFjSZFBXXcZgFXa_!!77155078.jpg_400x400.jpg',goods_price:100,goods_discount:20}
+//     var ud = {id:i,patient_no:name[statue],gravida_week:statue,content:name1[statue]}
+//     db.visits.upsert(ud).then((data)=>{
+//
+//     })
 // }
+//     var ud = {price:100,discount:10,info:'香港代购法国老牌珍贵水祛痘神仙水杨酸爽肤水闭口粉刺控油375ml',icon:'https://raw.githubusercontent.com/taylorchen709/markdown-images/master/vueadmin/user.png'}
+//     db.goods.upsert(ud).then((data)=>{
+//
+//     })

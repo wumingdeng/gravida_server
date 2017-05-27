@@ -1,4 +1,4 @@
-var Sequelize = require('Sequelize')
+var Sequelize = require('sequelize')
 var fs        = require('fs');
 var path      = require('path');
 var basename  = path.basename(module.filename);
@@ -36,5 +36,9 @@ Object.keys(db).forEach(function(modelName) {
 });
 
 db.sequelize = sequelize;
+db.Sequelize = Sequelize;
+
+
+
 
 module.exports = db;

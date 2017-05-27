@@ -6,7 +6,7 @@
     "dbname":"gravida",
     "dialect":"mysql",
     "poolsize":5,
-    "listen":8072,
+    "listen":8101,
     "ws":0
 }
 

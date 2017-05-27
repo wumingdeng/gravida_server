@@ -4,6 +4,7 @@ module.exports = function(sequelize, DataTypes) {
     patient_no: DataTypes.STRING,
     doctor_no: DataTypes.STRING,
     hospital_no: DataTypes.STRING,
+    gravida_week: DataTypes.INTEGER,
     content:DataTypes.STRING
   }, {
     classMethods: {
