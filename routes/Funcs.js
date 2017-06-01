@@ -5,6 +5,7 @@ var db = require('../models')
 var util = require('../util/uitl.js')
 var api = require('../util/api.js')
 var http = require("http");
+var querystring = require('querystring');
 
 tour_router.route('/getAdmins').post(function(req,res){
     var os = req.body.offset
@@ -243,7 +244,7 @@ tour_router.route('/delDoctors').post(function(req,res){
 tour_router.route('/getExpInfo').get(function(req,res){
     var id = req.body.id
     var data = api.getOrderTracesByJson("YTO",12345678)
-    data = JSON.stringify(data);
+    data = querystring.stringify(data);
     var opt = {
         host:'testapi.kdniao.cc',
         port:'8081',
@@ -254,12 +255,12 @@ tour_router.route('/getExpInfo').get(function(req,res){
             "Content-Length": data.length
         }
     }
-    console.log(data)
 
     var req = http.request(opt, function(res) {
+        res.setEncoding('utf8');
         console.log("response: " + res.statusCode);
         res.on('data',function(data){
-            body += data;
+            console.log(data)
         }).on('end', function(){
             console.log(body)
         });
