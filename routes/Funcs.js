@@ -2,7 +2,9 @@ var express=require('express');
 var tour_router=express.Router();
 var process = require('process');
 var db = require('../models')
-var util = require('../uitl.js')
+var util = require('../util/uitl.js')
+var api = require('../util/api.js')
+var http = require("http");
 
 tour_router.route('/getAdmins').post(function(req,res){
     var os = req.body.offset
@@ -235,6 +237,34 @@ tour_router.route('/delDoctors').post(function(req,res){
     var id = req.body.id
     db.doctors.destroy({where:{id:id}}).then(function(data){
         res.json({d:data});
+    })
+});
+
+tour_router.route('/getExpInfo').get(function(req,res){
+    var id = req.body.id
+    var data = api.getOrderTracesByJson("YTO",12345678)
+    data = JSON.stringify(data);
+    var opt = {
+        host:'testapi.kdniao.cc',
+        port:'8081',
+        method:'POST',
+        path:'/Ebusiness/EbusinessOrderHandle.aspx',
+        headers:{
+            "Content-Type": 'application/x-www-form-urlencoded;charset=utf-8',
+            "Content-Length": data.length
+        }
+    }
+    console.log(data)
+
+    var req = http.request(opt, function(res) {
+        console.log("response: " + res.statusCode);
+        res.on('data',function(data){
+            body += data;
+        }).on('end', function(){
+            console.log(body)
+        });
+    }).on('error', function(e) {
+        console.log("error: " + e.message);
     })
 });
 

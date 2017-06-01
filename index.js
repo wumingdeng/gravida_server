@@ -48,9 +48,12 @@ app.use(express.static(path.join(__dirname, 'static')));
 //    res.write("<html><h1>svn</h1></html>");
 //});
 app.all('*', function(req, res, next) {
+    console.log(req.headers.origin)
     if( req.headers.origin == 'http://192.168.18.165'
         || req.headers.origin == 'http://121.40.254.174'
         || req.headers.origin == 'http://121.40.254.174:8102'
+        || req.headers.origin == 'http://121.40.254.174:8001'
+        || req.headers.origin == 'http://localhost:8080'
         || req.headers.origin == 'http://192.168.18.165:8011'
         || req.headers.origin == 'http://192.168.18.165:8012') {
         res.header("Access-Control-Allow-Origin", req.headers.origin);
