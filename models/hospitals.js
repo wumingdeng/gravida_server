@@ -2,6 +2,8 @@
 module.exports = function(sequelize, DataTypes) {
   var hospitals = sequelize.define('hospitals', {
     name: DataTypes.STRING,
+    host: DataTypes.STRING,
+    favicon: DataTypes.STRING,
   }, {
     classMethods: {
       associate: function(models) {

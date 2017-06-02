@@ -6,6 +6,8 @@ var util = require('../util/uitl.js')
 var api = require('../util/api.js')
 var http = require("http");
 var querystring = require('querystring');
+var UUID = require('uuid');
+var fs=require('fs');
 
 tour_router.route('/getAdmins').post(function(req,res){
     var os = req.body.offset
@@ -31,19 +33,26 @@ tour_router.route('/saveAdmin').post(function(req,res){
     var fn = req.body.familyname
     var weight = req.body.weight.toString()
     var uData = {}
+    var ID = UUID.v1();
     if(id){
         uData = {id:id,username:un,password:pw,familyname:fn,weight:weight}
     }else{
-        uData = {username:un,password:pw,familyname:fn,weight:weight}
+        uData = {id:ID,username:un,password:pw,familyname:fn,weight:weight}
     }
     util.checkRedisSessionId(req.sessionID,function(err,object){
         if(err){
             res.json({ok:-1})
         }else{
-            db.admins.upsert(uData).then(function(data){
-                res.json({ok:1,d:data});
+            db.admins.findOne({where:{username:un}}).then((data)=>{
+                console.log(data)
+                if(data){
+                    res.json({ok:0});
+                }else{
+                    db.admins.upsert(uData).then(function(data){
+                    res.json({ok:1,d:data});
+                })
+                }
             })
-
         }
     })
 });
@@ -190,14 +199,47 @@ tour_router.route('/getHospitals').post(function(req,res){
 tour_router.route('/saveHospitals').post(function(req,res){
     var id = req.body.id
     var name = req.body.name
+    var host = req.body.host
+    var favicon = req.body.favicon
+    var admin = req.body.username
+    var password = req.body.password
     var uData = {}
+    var hData = {}
+    var ID = UUID.v1();
+    var source = require('../hospital.json');
     if(id){
-        uData = {id:id,name:name}
+        console.log("更新数据")
+        hData = {id:id,name:name,host:host,favicon:favicon}
+        uData = {hospital_no:id,username:admin,password:password,familyname:admin,weight:'0,1,2'}
+        source[id] ={name:name,host:host,favicon:favicon,username:admin,password:password,familyname:admin}
     }else{
-        uData = {name:name}
+        console.log("插入数据")
+        hData = {id:ID,name:name,host:host,favicon:favicon}
+        uData = {hospital_no:ID,username:admin,password:password,familyname:admin,weight:'0,1,2'}
+        source[ID] ={name:name,host:host,favicon:favicon,username:admin,password:password,familyname:admin}
     }
-    db.hospitals.upsert(uData).then(function(data){
-        res.json({d:data});
+    var destString = JSON.stringify(source);
+    db.hospitals.findOne({where:{host:host}}).then(function(data) {
+        console.log(data)
+        if(data){
+            res.json({ok: -1});
+        }else{
+            db.hospitals.upsert(hData).then(function (data) {
+                if (data) {
+                    db.admins.upsert(uData).then(function (data) {
+                        if (data) {
+                            console.log(destString)
+                            fs.writeFileSync('../hospital.json', destString);
+                            res.json({ok: 1, d: data});
+                        } else {
+                            res.json({ok: 0});
+                        }
+                    })
+                } else {
+                    res.json({ok: 0});
+                }
+            })
+        }
     })
 });
 
@@ -241,8 +283,10 @@ tour_router.route('/delDoctors').post(function(req,res){
     })
 });
 
-tour_router.route('/getExpInfo').get(function(req,respone){
-    var id = req.body.id
+tour_router.route('/getExpInfo').post(function(req,respone){
+    var expCode=req.body.expCode
+    var expNo=req.body.expNo
+    var orderCode=req.body.orderCode
     var data = api.getOrderTracesByJson("YTO",12345678)
     data = querystring.stringify(data);
     var opt = {
