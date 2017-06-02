@@ -55,6 +55,7 @@ app.all('*', function(req, res, next) {
         || req.headers.origin == 'http://121.40.254.174:8001'
         || req.headers.origin == 'http://localhost:8080'
         || req.headers.origin == 'http://192.168.18.165:8011'
+        || req.headers.origin == 'http://192.168.18.216:8091'
         || req.headers.origin == 'http://192.168.18.165:8012') {
         res.header("Access-Control-Allow-Origin", req.headers.origin);
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");

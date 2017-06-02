@@ -241,7 +241,7 @@ tour_router.route('/delDoctors').post(function(req,res){
     })
 });
 
-tour_router.route('/getExpInfo').get(function(req,res){
+tour_router.route('/getExpInfo').get(function(req,respone){
     var id = req.body.id
     var data = api.getOrderTracesByJson("YTO",12345678)
     data = querystring.stringify(data);
@@ -255,18 +255,27 @@ tour_router.route('/getExpInfo').get(function(req,res){
             "Content-Length": data.length
         }
     }
-
     var req = http.request(opt, function(res) {
         res.setEncoding('utf8');
         console.log("response: " + res.statusCode);
-        res.on('data',function(data){
-            console.log(data)
+        var str = ""
+        res.on('data',function(d){
+            str += d;
+            console.log(d)
+
         }).on('end', function(){
+
+            var body=JSON.parse(str);
+            respone.json({ok:1,d:body})
             console.log(body)
         });
     }).on('error', function(e) {
+        respone.json({ok:0,err:e.message})
         console.log("error: " + e.message);
     })
+
+    req.write(data + "\n");
+    req.end();
 });
 
 module.exports=tour_router;
