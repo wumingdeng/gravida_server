@@ -16,28 +16,28 @@ var route_table = require('./routes/routeTable');
 var session = require('express-session');
 var RedisStore = require('connect-redis')(session);
 
-var hour = 3600000
-app.use(session({
-    name:"sid",
-    cookie:{
-        expires:new Date(Date.now() + hour),
-        maxAge:hour,
-    },
-    saveUninitialized : false,
-    resave : true,
-    store: new RedisStore({
-        host:'127.0.0.1',
-        port:'6379'
-    }),
-    secret: 'fizzo'
-}));
+// var hour = 3600000
+// app.use(session({
+//     name:"sid",
+//     cookie:{
+//         expires:new Date(Date.now() + hour),
+//         maxAge:hour,
+//     },
+//     saveUninitialized : false,
+//     resave : true,
+//     store: new RedisStore({
+//         host:'127.0.0.1',
+//         port:'6379'
+//     }),
+//     secret: 'fizzo'
+// }));
 
-app.use(function (req, res, next) {
-    if (!req.session) {
-        return next(new Error('oh no')) // handle error
-    }
-    next()
-})
+// app.use(function (req, res, next) {
+//     if (!req.session) {
+//         return next(new Error('oh no')) // handle error
+//     }
+//     next()
+// })
 
 app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({extended: false}));
@@ -56,6 +56,7 @@ app.all('*', function(req, res, next) {
         || req.headers.origin == 'http://localhost:8080'
         || req.headers.origin == 'http://192.168.18.165:8011'
         || req.headers.origin == 'http://192.168.18.216:8091'
+        || req.headers.origin == 'http://192.168.0.106:8011'
         || req.headers.origin == 'http://192.168.18.165:8012') {
         res.header("Access-Control-Allow-Origin", req.headers.origin);
         res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
@@ -82,6 +83,13 @@ process.on('uncaughtException', function (err) {
     console.log(err.stack)
 });
 
+var fs=require('fs'); 
+
+fs.writeFileSync('./output.json',JSON.stringify({a:1,b:2})); 
+
+var JsonObj=JSON.parse(fs.readFileSync('./output.json')); 
+
+console.log(JsonObj);
 
 // // serve pure static assets
 // var staticPath = '/static';
