@@ -12,10 +12,9 @@ var db = require('./models');
 // api controllers
 var route_table = require('./routes/routeTable');
 var fs=require('fs');
-var UUID = require('uuid');
 var api = require('./util/api.js')
 var http = require("http");
-var querystring = require('querystring');
+
 
 var session = require('express-session');
 var RedisStore = require('connect-redis')(session);
@@ -52,24 +51,14 @@ app.use(express.static(path.join(__dirname, 'static')));
 //    res.write("<html><h1>svn</h1></html>");
 //});
 app.all('*', function(req, res, next) {
-    console.log(req.headers.origin)
-    if( req.headers.origin == 'http://192.168.18.165'
-        || req.headers.origin == 'http://121.40.254.174'
-        || req.headers.origin == 'http://121.40.254.174:8102'
-        || req.headers.origin == 'http://121.40.254.174:8001'
-        || req.headers.origin == 'http://localhost:8080'
-        || req.headers.origin == 'http://192.168.18.165:8011'
-        || req.headers.origin == 'http://localhost:8091'
-        || req.headers.origin == 'http://192.168.0.106:8011'
-        || req.headers.origin == 'http://192.168.18.165:8012') {
-        res.header("Access-Control-Allow-Origin", req.headers.origin);
-        res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
-        res.header("Access-Control-Allow-Credentials", true);
-        res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
-        res.header("X-Powered-By", 'Express')
-        res.header("Content-Type", "application/json;charset=utf-8");
-        next();
-    }
+    console.log("host:"+req.headers.origin)
+    res.header("Access-Control-Allow-Origin", req.headers.origin);
+    res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
+    res.header("Access-Control-Allow-Credentials", true);
+    res.header("Access-Control-Allow-Methods", "PUT,POST,GET,DELETE,OPTIONS");
+    res.header("X-Powered-By", 'Express')
+    res.header("Content-Type", "application/json;charset=utf-8");
+    next();
 });
 // middleware register
 
@@ -128,37 +117,35 @@ var server = app.listen(app.get('port'), function() {
 //     db.goods.upsert(ud).then((data)=>{
 //
 //     })
-
-var data = api.getOrderTracesByJson("YD",3963581388235)
-
-data = querystring.stringify(data);
-var opt = {
-    // host:'testapi.kdniao.cc',
-    // http://testapi.kdniao.cc:8081/api/dist
-    host:'api.kdniao.cc',
-    port:'80',
-    method:'POST',
-    path:'/Ebusiness/EbusinessOrderHandle.aspx',
-    // path:'/api/dist',
-    headers:{
-        "Content-Type": 'application/x-www-form-urlencoded;charset=utf-8',
-        "Content-Length": data.length
-    }
-}
-console.log(data)
-var req = http.request(opt, function(res) {
-    res.setEncoding('utf8');
-    console.log("response: " + res.statusCode);
-    var str = ""
-    res.on('data',function(d){
-        str += d;
-    }).on('end', function(){
-        var body=JSON.parse(str);
-        console.log(body)
-    });
-}).on('error', function(e) {
-    console.log("error: " + e.message);
-})
-
-req.write(data + "\n");
-req.end();
+//
+//
+// var data = api.getOrderTracesByJson("YTO",'885315673857929159')
+// var opt = {
+//     // host:'testapi.kdniao.cc',
+//     // http://testapi.kdniao.cc:8081/api/dist
+//     host:'api.kdniao.cc',
+//     port:'80',
+//     method:'POST',
+//     // path:'/Ebusiness/EbusinessOrderHandle.aspx',
+//     path:'/api/dist',
+//     headers:{
+//         "Content-Type": 'application/x-www-form-urlencoded;charset=utf-8',
+//         "Content-Length": data.length
+//     }
+// }
+// var req = http.request(opt, function(res) {
+//     res.setEncoding('utf8');
+//     console.log("response: " + res.statusCode);
+//     var str = ""
+//     res.on('data',function(d){
+//         str += d;
+//     }).on('end', function(){
+//         var body=JSON.parse(str);
+//         console.log(body)
+//     });
+// }).on('error', function(e) {
+//     console.log("error: " + e.message);
+// })
+//
+// req.write(data + "\n");
+// req.end();

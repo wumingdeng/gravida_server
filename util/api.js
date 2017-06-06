@@ -1,9 +1,9 @@
 // import { hex_md5,b64_md5 } from './md5.js'
 // import Base64 from './base64.js'
 
+var querystring = require('querystring');
+
 var api = {}
-// api.url = "http://api.kdniao.cc/Ebusiness/EbusinessOrderHandle.aspx"
-api.url = "http://testapi.kdniao.cc:8081/Ebusiness/EbusinessOrderHandle.aspx"
 api.EBusinessID = 1287326
 api.AppKey = "f9da5ad9-6437-4383-8653-4455769fa63d"
 
@@ -22,7 +22,7 @@ api.getOrderTracesByJson = function(expCode,expNo,orderCode){
         DataSign:encodeURIComponent(dataSign),
         DataType:"2"
     };
-    return params;
+    return querystring.stringify(params);;
 }
 
 api.sendPost = function(){

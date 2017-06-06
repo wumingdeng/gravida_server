@@ -309,34 +309,57 @@ tour_router.route('/delDoctors').post(function(req,res){
         res.json({d:data});
     })
 });
-
-tour_router.route('/getExpInfo').post(function(req,respone){
-    var expCode=req.body.expCode
-    var expNo=req.body.expNo
-    var orderCode=req.body.orderCode
-    var data = api.getOrderTracesByJson("YTO",885315673857929159)
-    data = querystring.stringify(data);
+tour_router.route('/test').get(function(req,respone){
+    var data = api.getOrderTracesByJson("YTO",'885315673857929159')
     var opt = {
-        // host:'testapi.kdniao.cc',
         host:'api.kdniao.cc',
         port:'80',
         method:'POST',
-        path:'/Ebusiness/EbusinessOrderHandle.aspx',
+        path:'/api/dist',
         headers:{
             "Content-Type": 'application/x-www-form-urlencoded;charset=utf-8',
             "Content-Length": data.length
         }
     }
-    var req = http.request(opt, function(res) {
+    var _req = http.request(opt, function(res) {
         res.setEncoding('utf8');
         console.log("response: " + res.statusCode);
         var str = ""
         res.on('data',function(d){
             str += d;
-            console.log(d)
-
         }).on('end', function(){
+            var body=JSON.parse(str);
+            respone.json({ok:1,d:body})
+        });
+    }).on('error', function(e) {
+        console.log("error: " + e.message);
+    })
+    _req.write(data + "\n");
+    _req.end();
+});
 
+tour_router.route('/getExpInfo').post(function(req,respone){
+    var expCode=req.body.expCode
+    var expNo=req.body.expNo
+    var orderCode=req.body.orderCode
+    var data = api.getOrderTracesByJson(expCode,expNo)
+    var opt = {
+        host:'api.kdniao.cc',
+        port:'80',
+        method:'POST',
+        path:'/api/dist',
+        headers:{
+            "Content-Type": 'application/x-www-form-urlencoded;charset=utf-8',
+            "Content-Length": data.length
+        }
+    }
+    var _req = http.request(opt, function(res) {
+        res.setEncoding('utf8');
+        console.log("response: " + res.statusCode);
+        var str = ""
+        res.on('data',function(d){
+            str += d;
+        }).on('end', function(){
             var body=JSON.parse(str);
             respone.json({ok:1,d:body})
             console.log(body)
@@ -346,8 +369,8 @@ tour_router.route('/getExpInfo').post(function(req,respone){
         console.log("error: " + e.message);
     })
 
-    req.write(data + "\n");
-    req.end();
+    _req.write(data + "\n");
+    _req.end();
 });
 
 module.exports=tour_router;
