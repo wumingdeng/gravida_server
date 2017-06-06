@@ -12,7 +12,12 @@ var fs=require('fs');
 tour_router.route('/getAdmins').post(function(req,res){
     var os = req.body.offset
     var lmt = req.body.limit
-    db.admins.findAndCountAll({offset:os,limit:lmt}).then(function(data){
+    var h_no = req.body.h_no
+    var filter = {offset:os,limit:lmt}
+    if(h_no){
+        filter.hospital_no = h_no
+    }
+    db.admins.findAndCountAll(filter).then(function(data){
         res.json({d:data});
     })
 });
@@ -21,7 +26,12 @@ tour_router.route('/getAdminByName').post(function(req,res){
     var v = req.body.v
     var os = req.body.offset
     var lmt = req.body.limit
-    db.admins.findAndCountAll({where:{familyname:{$like:'%'+v+'%'}},offset:os,limit:lmt}).then(function(data){
+    var h_no = req.body.h_no
+    var filter = {familyname:{$like:'%'+v+'%'}}
+    if(h_no){
+        filter.hospital_no = h_no
+    }
+    db.admins.findAndCountAll({where:filter,offset:os,limit:lmt}).then(function(data){
         res.json({d:data});
     })
 });
@@ -74,7 +84,12 @@ tour_router.route('/getVisits').post(function(req,res){
     var os = req.body.offset
     var lmt = req.body.limit
     var doctorNo = req.body.dn
-    db.visits.findAndCountAll({where:{doctor_no:doctorNo},offset:os,limit:lmt}).then((data)=>{
+    var h_no = req.body.h_no
+    var filter = {doctor_no:doctorNo}
+    if(h_no){
+        filter.hospital_no = h_no
+    }
+    db.visits.findAndCountAll({where:filter,offset:os,limit:lmt}).then((data)=>{
         res.json({d:data});
     })
 });
@@ -122,6 +137,7 @@ tour_router.route('/getVisitsBylike').post(function(req,res){
     var lmt = req.body.limit
     var value = req.body.v
     var key = req.body.k
+    var h_no = req.body.h_no
     var ud = {}
     switch(key){
         case "patient_no":
@@ -132,6 +148,9 @@ tour_router.route('/getVisitsBylike').post(function(req,res){
             break;
         default:
             break;
+    }
+    if(h_no){
+        ud.hospital_no = h_no
     }
     db.visits.findAndCountAll({where:ud,offset:os,limit:lmt}).then(function(data){
         res.json({d:data}); 
@@ -155,11 +174,19 @@ tour_router.route('/login').post(function(req,res){
     console.log("session:"+req.sessionID)
     var un = req.body.username
     var pw = req.body.password
-    db.admins.findOne({where:{username:un,password:pw}}).then((data)=>{
+    var h_no = req.body.h_no
+    var filterCol = {}
+    if(h_no){
+        filterCol = {username:un,password:pw,hospital_no:h_no}
+    }else{
+        filterCol = {username:un,password:pw}
+    }
+    db.admins.findOne({where:filterCol}).then((data)=>{
         if(data){
             req.session.username = un
             req.session.weight = data.dataValues.weight
             req.session.login = true
+            req.session.h_no = h_no
             res.json({ok:1,d:data.dataValues});
         }else{
             res.json({ok:0})
@@ -229,7 +256,7 @@ tour_router.route('/saveHospitals').post(function(req,res){
                     db.admins.upsert(uData).then(function (data) {
                         if (data) {
                             console.log(destString)
-                            fs.writeFileSync('../hospital.json', destString);
+                            fs.writeFileSync('./hospital.json', destString);
                             res.json({ok: 1, d: data});
                         } else {
                             res.json({ok: 0});
@@ -287,11 +314,12 @@ tour_router.route('/getExpInfo').post(function(req,respone){
     var expCode=req.body.expCode
     var expNo=req.body.expNo
     var orderCode=req.body.orderCode
-    var data = api.getOrderTracesByJson("YTO",12345678)
+    var data = api.getOrderTracesByJson("YTO",885315673857929159)
     data = querystring.stringify(data);
     var opt = {
-        host:'testapi.kdniao.cc',
-        port:'8081',
+        // host:'testapi.kdniao.cc',
+        host:'api.kdniao.cc',
+        port:'80',
         method:'POST',
         path:'/Ebusiness/EbusinessOrderHandle.aspx',
         headers:{

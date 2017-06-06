@@ -11,7 +11,11 @@ var cfg = require('./config.json')
 var db = require('./models');
 // api controllers
 var route_table = require('./routes/routeTable');
-
+var fs=require('fs');
+var UUID = require('uuid');
+var api = require('./util/api.js')
+var http = require("http");
+var querystring = require('querystring');
 
 var session = require('express-session');
 var RedisStore = require('connect-redis')(session);
@@ -102,6 +106,7 @@ var server = app.listen(app.get('port'), function() {
     console.log('server listening on port ' + server.address().port);
 });
 
+
 // var dt = 1000000000
 // var name = ['无名等','无名灯','唔明邓','唔明等','唔明等','唔明等','唔明等']
 // var name1 = ['体重+足部扫描','仅体重','体重+足部扫描','体重+足部扫描','仅体重','仅体重','体重+足部扫描']
@@ -123,3 +128,37 @@ var server = app.listen(app.get('port'), function() {
 //     db.goods.upsert(ud).then((data)=>{
 //
 //     })
+
+var data = api.getOrderTracesByJson("YD",3963581388235)
+
+data = querystring.stringify(data);
+var opt = {
+    // host:'testapi.kdniao.cc',
+    // http://testapi.kdniao.cc:8081/api/dist
+    host:'api.kdniao.cc',
+    port:'80',
+    method:'POST',
+    path:'/Ebusiness/EbusinessOrderHandle.aspx',
+    // path:'/api/dist',
+    headers:{
+        "Content-Type": 'application/x-www-form-urlencoded;charset=utf-8',
+        "Content-Length": data.length
+    }
+}
+console.log(data)
+var req = http.request(opt, function(res) {
+    res.setEncoding('utf8');
+    console.log("response: " + res.statusCode);
+    var str = ""
+    res.on('data',function(d){
+        str += d;
+    }).on('end', function(){
+        var body=JSON.parse(str);
+        console.log(body)
+    });
+}).on('error', function(e) {
+    console.log("error: " + e.message);
+})
+
+req.write(data + "\n");
+req.end();
