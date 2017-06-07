@@ -13,11 +13,12 @@ tour_router.route('/getAdmins').post(function(req,res){
     var os = req.body.offset
     var lmt = req.body.limit
     var h_no = req.body.h_no
-    var filter = {offset:os,limit:lmt}
-    if(h_no){
-        filter.hospital_no = h_no
-    }
-    db.admins.findAndCountAll(filter).then(function(data){
+    var filter = {}
+    h_no = h_no?h_no:'1'
+    console.log(h_no)
+    filter.hospital_no = h_no
+    console.log(filter)
+    db.admins.findAndCountAll({where:filter,offset:os,limit:lmt}).then(function(data){
         res.json({d:data});
     })
 });
@@ -28,9 +29,9 @@ tour_router.route('/getAdminByName').post(function(req,res){
     var lmt = req.body.limit
     var h_no = req.body.h_no
     var filter = {familyname:{$like:'%'+v+'%'}}
-    if(h_no){
-        filter.hospital_no = h_no
-    }
+    h_no = h_no?h_no:'1'
+    console.log(h_no)
+    filter.hospital_no = h_no
     db.admins.findAndCountAll({where:filter,offset:os,limit:lmt}).then(function(data){
         res.json({d:data});
     })
@@ -42,13 +43,17 @@ tour_router.route('/saveAdmin').post(function(req,res){
     var pw = req.body.password
     var fn = req.body.familyname
     var weight = req.body.weight.toString()
+    var h_no = req.body.h_no
     var uData = {}
-    var ID = UUID.v1();
     if(id){
         uData = {id:id,username:un,password:pw,familyname:fn,weight:weight}
     }else{
-        uData = {id:ID,username:un,password:pw,familyname:fn,weight:weight}
+        uData = {username:un,password:pw,familyname:fn,weight:weight}
     }
+    console.log(h_no)
+    h_no = h_no?h_no:'1'
+    console.log(h_no)
+    uData.hospital_no = h_no
     util.checkRedisSessionId(req.sessionID,function(err,object){
         if(err){
             res.json({ok:-1})
@@ -88,6 +93,9 @@ tour_router.route('/getVisits').post(function(req,res){
     var filter = {doctor_no:doctorNo}
     if(h_no){
         filter.hospital_no = h_no
+    }else{
+        res.json({ok:0});
+        return
     }
     db.visits.findAndCountAll({where:filter,offset:os,limit:lmt}).then((data)=>{
         res.json({d:data});
@@ -151,6 +159,9 @@ tour_router.route('/getVisitsBylike').post(function(req,res){
     }
     if(h_no){
         ud.hospital_no = h_no
+    }else{
+        res.json({ok:0});
+        return
     }
     db.visits.findAndCountAll({where:ud,offset:os,limit:lmt}).then(function(data){
         res.json({d:data}); 
@@ -175,12 +186,8 @@ tour_router.route('/login').post(function(req,res){
     var un = req.body.username
     var pw = req.body.password
     var h_no = req.body.h_no
-    var filterCol = {}
-    if(h_no){
-        filterCol = {username:un,password:pw,hospital_no:h_no}
-    }else{
-        filterCol = {username:un,password:pw}
-    }
+    h_no = h_no?h_no:'1'
+    var filterCol = {username:un,password:pw,hospital_no:h_no}
     db.admins.findOne({where:filterCol}).then((data)=>{
         if(data){
             req.session.username = un
@@ -201,6 +208,7 @@ tour_router.route('/signOut').get(function(req,res){
             res.json({ok:-1})
         }else{
             util.clearSession(req.sessionID)
+            req.session.destroy()
         }
     })
     res.json({ok:1})
@@ -218,16 +226,39 @@ tour_router.route('/getHospitalsByName').post(function(req,res){
 tour_router.route('/getHospitals').post(function(req,res){
     var os = req.body.offset
     var lmt = req.body.limit
-    db.hospitals.findAndCountAll({offset:os,limit:lmt}).then(function(data){
+    db.hospitals.findAndCountAll({where:{id:{$ne:'1'}},offset:os,limit:lmt,include: [{model: db.admins,where: {weight:'0,1,2,3'}}]}).then(function(data){
         res.json({d:data});
     })
 });
+
+tour_router.route('/updateHospitalStatue').post(function(req,res){
+    var id = req.body.id
+    var st = req.body.st
+    util.checkRedisSessionId(req.sessionID,function(err,object){
+        if(err){
+            res.json({ok: 0});
+        }else{
+            
+            if(object.weight.indexOf('2')<0){
+                res.json({ok: 0});
+                return
+            }
+            db.hospitals.update({statue:st},{where:{id:id}}).then(function(data) {
+                if(data){
+                    res.json({ok: 1});
+                }else {
+                    res.json({ok: 0});
+                }
+            })
+        }
+    })
+
+})
 
 tour_router.route('/saveHospitals').post(function(req,res){
     var id = req.body.id
     var name = req.body.name
     var host = req.body.host
-    var favicon = req.body.favicon
     var admin = req.body.username
     var password = req.body.password
     var uData = {}
@@ -236,34 +267,44 @@ tour_router.route('/saveHospitals').post(function(req,res){
     var source = require('../hospital.json');
     if(id){
         console.log("更新数据")
-        hData = {id:id,name:name,host:host,favicon:favicon}
-        uData = {hospital_no:id,username:admin,password:password,familyname:admin,weight:'0,1,2'}
-        source[id] ={name:name,host:host,favicon:favicon,username:admin,password:password,familyname:admin}
+        hData = {id:id,name:name,host:host,statue:0}
+        uData = {hospital_no:id,username:admin,password:password,familyname:admin,weight:'0,1,2,3'}
+        source[id] ={name:name,host:host,statue:0,username:admin,password:password,familyname:admin}
     }else{
         console.log("插入数据")
-        hData = {id:ID,name:name,host:host,favicon:favicon}
-        uData = {hospital_no:ID,username:admin,password:password,familyname:admin,weight:'0,1,2'}
-        source[ID] ={name:name,host:host,favicon:favicon,username:admin,password:password,familyname:admin}
+        hData = {id:ID,name:name,host:host,statue:0}
+        uData = {hospital_no:ID,username:admin,password:password,familyname:admin,weight:'0,1,2,3'}
+        source[ID] ={name:name,host:host,statue:0,username:admin,password:password,familyname:admin}
     }
     var destString = JSON.stringify(source);
-    db.hospitals.findOne({where:{host:host}}).then(function(data) {
-        console.log(data)
-        if(data){
-            res.json({ok: -1});
+    util.checkRedisSessionId(req.sessionID,function(err,object){
+        if(err){
+            res.json({ok:0})
         }else{
-            db.hospitals.upsert(hData).then(function (data) {
-                if (data) {
-                    db.admins.upsert(uData).then(function (data) {
+            if(object.weight.indexOf('2')<0){
+                res.json({ok: -1});
+                return
+            }
+            db.hospitals.findOne({where:{host:host}}).then(function(data) {
+                console.log(data)
+                if(data){
+                    res.json({ok: -1});
+                }else{
+                    db.hospitals.upsert(hData).then(function (data) {
                         if (data) {
-                            console.log(destString)
-                            fs.writeFileSync('./hospital.json', destString);
-                            res.json({ok: 1, d: data});
+                            db.admins.upsert(uData).then(function (data) {
+                                if (data) {
+                                    console.log(destString)
+                                    fs.writeFileSync('./hospital.json', destString);
+                                    res.json({ok: 1, d: data});
+                                } else {
+                                    res.json({ok: 0});
+                                }
+                            })
                         } else {
                             res.json({ok: 0});
                         }
                     })
-                } else {
-                    res.json({ok: 0});
                 }
             })
         }
@@ -342,7 +383,7 @@ tour_router.route('/getExpInfo').post(function(req,respone){
     var expCode=req.body.expCode
     var expNo=req.body.expNo
     var orderCode=req.body.orderCode
-    var data = api.getOrderTracesByJson(expCode,expNo)
+    var data = api.getOrderTracesByJson(expCode,expNo,orderCode)
     var opt = {
         host:'api.kdniao.cc',
         port:'80',

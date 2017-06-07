@@ -16,9 +16,9 @@ client.on("error",function(error){
 
 
 uitl.checkRedisSessionId = function(sid,cd){
-    console.log("sess:"+sid)
     client.get("sess:"+sid, function(err, object) {
-        cd(err,object)
+        console.log("sess:"+sid+':'+object)
+        cd(err,JSON.parse(object))
     })
 }
 
