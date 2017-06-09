@@ -22,7 +22,7 @@ api.getOrderTracesByJson = function(expCode,expNo,orderCode){
         DataSign:encodeURIComponent(dataSign),
         DataType:"2"
     };
-    return querystring.stringify(params);;
+    return querystring.stringify(params);
 }
 
 api.sendPost = function(){

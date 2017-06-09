@@ -12,12 +12,9 @@ var fs=require('fs');
 tour_router.route('/getAdmins').post(function(req,res){
     var os = req.body.offset
     var lmt = req.body.limit
-    var h_no = req.body.h_no
+    var h_no = req.body.h_no || '1'
     var filter = {}
-    h_no = h_no?h_no:'1'
-    console.log(h_no)
     filter.hospital_no = h_no
-    console.log(filter)
     db.admins.findAndCountAll({where:filter,offset:os,limit:lmt}).then(function(data){
         res.json({d:data});
     })
@@ -27,10 +24,8 @@ tour_router.route('/getAdminByName').post(function(req,res){
     var v = req.body.v
     var os = req.body.offset
     var lmt = req.body.limit
-    var h_no = req.body.h_no
+    var h_no = req.body.h_no || '1'
     var filter = {familyname:{$like:'%'+v+'%'}}
-    h_no = h_no?h_no:'1'
-    console.log(h_no)
     filter.hospital_no = h_no
     db.admins.findAndCountAll({where:filter,offset:os,limit:lmt}).then(function(data){
         res.json({d:data});
@@ -43,16 +38,13 @@ tour_router.route('/saveAdmin').post(function(req,res){
     var pw = req.body.password
     var fn = req.body.familyname
     var weight = req.body.weight.toString()
-    var h_no = req.body.h_no
+    var h_no = req.body.h_no || '1'
     var uData = {}
     if(id){
         uData = {id:id,username:un,password:pw,familyname:fn,weight:weight}
     }else{
         uData = {username:un,password:pw,familyname:fn,weight:weight}
     }
-    console.log(h_no)
-    h_no = h_no?h_no:'1'
-    console.log(h_no)
     uData.hospital_no = h_no
     util.checkRedisSessionId(req.sessionID,function(err,object){
         if(err){
@@ -85,20 +77,14 @@ tour_router.route('/delAdmin').post(function(req,res){
     })
 });
 
-tour_router.route('/getVisits').post(function(req,res){
-    var os = req.body.offset
-    var lmt = req.body.limit
-    var doctorNo = req.body.dn
-    var h_no = req.body.h_no
-    var filter = {doctor_no:doctorNo}
-    if(h_no){
-        filter.hospital_no = h_no
-    }else{
-        res.json({ok:0});
-        return
-    }
-    db.visits.findAndCountAll({where:filter,offset:os,limit:lmt}).then((data)=>{
-        res.json({d:data});
+tour_router.route('/getVisits').post(function(req,respone){
+    var p = req.body.p
+    var s = req.body.s
+    var did = req.body.did
+    util.accessOutUrl('180yxd.sujudao.com','8097','POST','/api/get_doctor_reportlist',{p:p,s:0,did:did},function(body){
+        respone.json(body);
+    },function(err){
+        respone.json({error:err});
     })
 });
 
@@ -168,10 +154,14 @@ tour_router.route('/getVisitsBylike').post(function(req,res){
     })
 });
 
+
 tour_router.route('/getReportByNo').post(function(req,res){
-    var no = req.body.no
-    db.reports.findOne({where:{gravida_no:no}}).then((data)=>{
-        res.json({d:data});
+    var no = req.body.rid
+    var openid = req.body.openid
+    util.accessOutUrl('180yxd.sujudao.com','8097','POST','/api/getreport',{rid:no,openid:openid},function(body){
+        res.json(body);
+    },function(err){
+        res.json({error:err});
     })
 });
 
@@ -185,8 +175,7 @@ tour_router.route('/login').post(function(req,res){
     console.log("session:"+req.sessionID)
     var un = req.body.username
     var pw = req.body.password
-    var h_no = req.body.h_no
-    h_no = h_no?h_no:'1'
+    var h_no = req.body.h_no || '1'
     var filterCol = {username:un,password:pw,hospital_no:h_no}
     db.admins.findOne({where:filterCol}).then((data)=>{
         if(data){
@@ -256,7 +245,7 @@ tour_router.route('/updateHospitalStatue').post(function(req,res){
 })
 
 tour_router.route('/saveHospitals').post(function(req,res){
-    var id = req.body.id
+    
     var name = req.body.name
     var host = req.body.host
     var admin = req.body.username
@@ -264,18 +253,18 @@ tour_router.route('/saveHospitals').post(function(req,res){
     var uData = {}
     var hData = {}
     var ID = UUID.v1();
+    var id = req.body.id || ID
     var source = require('../hospital.json');
-    if(id){
         console.log("更新数据")
         hData = {id:id,name:name,host:host,statue:0}
         uData = {hospital_no:id,username:admin,password:password,familyname:admin,weight:'0,1,2,3'}
         source[id] ={name:name,host:host,statue:0,username:admin,password:password,familyname:admin}
-    }else{
-        console.log("插入数据")
-        hData = {id:ID,name:name,host:host,statue:0}
-        uData = {hospital_no:ID,username:admin,password:password,familyname:admin,weight:'0,1,2,3'}
-        source[ID] ={name:name,host:host,statue:0,username:admin,password:password,familyname:admin}
-    }
+    // }else{
+    //     console.log("插入数据")
+    //     hData = {id:ID,name:name,host:host,statue:0}
+    //     uData = {hospital_no:ID,username:admin,password:password,familyname:admin,weight:'0,1,2,3'}
+    //     source[ID] ={name:name,host:host,statue:0,username:admin,password:password,familyname:admin}
+    // }
     var destString = JSON.stringify(source);
     util.checkRedisSessionId(req.sessionID,function(err,object){
         if(err){
