@@ -15,10 +15,17 @@ client.on("error",function(error){
     console.log(error)
 })
 
-uitl.checkRedisSessionId = function(sid,cd){
+uitl.checkRedisSessionId = function(sid,res,cd){
     client.get("sess:"+sid, function(err, object) {
         console.log("sess:"+sid+':'+object)
-        cd(err,JSON.parse(object))
+        if(err){
+            res.json({ok:g.errorCode.WRONG_SESSION_ERROR})
+        }else if(object){
+            cd(JSON.parse(object))
+        }else{
+            res.json({ok:g.errorCode.WRONG_SESSION_ERROR})
+        }
+        // cd(err,JSON.parse(object))
     })
 }
 

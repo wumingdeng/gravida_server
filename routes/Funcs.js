@@ -8,6 +8,7 @@ var http = require("http");
 var querystring = require('querystring');
 var UUID = require('uuid');
 var fs=require('fs');
+var g = require('../global')
 
 tour_router.route('/getAdmins').post(function(req,res){
     var os = req.body.offset
@@ -46,42 +47,38 @@ tour_router.route('/saveAdmin').post(function(req,res){
         uData = {username:un,password:pw,familyname:fn,weight:weight}
     }
     uData.hospital_no = h_no
-    util.checkRedisSessionId(req.sessionID,function(err,object){
-        if(err){
-            res.json({ok:-1})
-        }else{
-            db.admins.findOne({where:{username:un}}).then((data)=>{
-                console.log(data)
-                if(data){
-                    res.json({ok:0});
-                }else{
-                    db.admins.upsert(uData).then(function(data){
-                    res.json({ok:1,d:data});
-                })
-                }
+    util.checkRedisSessionId(req.sessionID,res,function(object){
+        db.admins.findOne({where:{username:un}}).then((data)=>{
+            console.log(data)
+            if(data && !id){
+                res.json({ok:g.errorCode.WRONG_USER_EXIST});
+            }else{
+                db.admins.upsert(uData).then(function(data){
+                res.json({ok:1,d:data});
             })
-        }
+            }
+        })
     })
 });
 
 tour_router.route('/delAdmin').post(function(req,res){
     var id = req.body.id;
-    util.checkRedisSessionId(req.sessionID,function(err,object){
-        if(err){
-            res.json({ok:-1})
-        }else{
-            db.admins.destroy({where: {id: id}}).then(function (data) {
-                res.json({ok:1,d: data});
-            })
-        }
+    util.checkRedisSessionId(req.sessionID,res,function(object){
+        db.admins.destroy({where: {id: id}}).then(function (data) {
+            res.json({ok:1,d: data});
+        }).catch(function(err){
+            res.json({error:g.errorCode.WRONG_SQL})
+        })
     })
 });
 
+
+//获取医生报告
 tour_router.route('/getVisits').post(function(req,respone){
     var p = req.body.p
     var s = req.body.s
     var did = req.body.did
-    util.accessOutUrl('180yxd.sujudao.com','8097','POST','/api/get_doctor_reportlist',{p:p,s:0,did:did},function(body){
+    util.accessOutUrl(g.interface.addr,g.interface.port,'POST','/api/get_doctor_reportlist',{p:p,s:0,did:did},function(body){
         respone.json(body);
     },function(err){
         respone.json({error:err});
@@ -103,14 +100,12 @@ tour_router.route('/getOrders').post(function(req,res){
 tour_router.route('/updateOrders').post(function(req,res){
     var oid = req.body.id
     var st = req.body.status
-    util.checkRedisSessionId(req.sessionID,function(err,object){
-        if(err){
-            res.json({ok:-1})
-        }else{
-            db.orders.update({status:st},{where:{id:oid}}).then((data)=>{
-                res.json({ok:1});
-            })
-        }
+    util.checkRedisSessionId(req.sessionID,res,function(object){
+        db.orders.update({status:st},{where:{id:oid}}).then((data)=>{
+            res.json({ok:1});
+        }).catch(function(err){
+            res.json({error:g.errorCode.WRONG_SQL})
+        })
     })
 });
 
@@ -154,11 +149,23 @@ tour_router.route('/getVisitsBylike').post(function(req,res){
     })
 });
 
+//获取用户报告
+tour_router.route('/getUserReport').post(function(req,res){
+    var no = req.body.rid
+    var openid = req.body.openid
+    util.accessOutUrl(g.interface.addr,g.interface.port,'POST','/api/get_user_reportlist',{rid:no,openid:openid},function(body){
+        res.json(body);
+    },function(err){
+        res.json({error:err});
+    })
+});
 
+
+//获取报告详情
 tour_router.route('/getReportByNo').post(function(req,res){
     var no = req.body.rid
     var openid = req.body.openid
-    util.accessOutUrl('180yxd.sujudao.com','8097','POST','/api/getreport',{rid:no,openid:openid},function(body){
+    util.accessOutUrl(g.interface.addr,g.interface.port,'POST','/api/getreport',{rid:no,openid:openid},function(body){
         res.json(body);
     },function(err){
         res.json({error:err});
@@ -192,13 +199,9 @@ tour_router.route('/login').post(function(req,res){
 
 tour_router.route('/signOut').get(function(req,res){
     console.log("signOut")
-    util.checkRedisSessionId(req.sessionID,function(err,object){
-        if(err){
-            res.json({ok:-1})
-        }else{
-            util.clearSession(req.sessionID)
-            req.session.destroy()
-        }
+    util.checkRedisSessionId(req.sessionID,res,function(object){
+        util.clearSession(req.sessionID)
+        req.session.destroy()
     })
     res.json({ok:1})
 });
@@ -223,29 +226,25 @@ tour_router.route('/getHospitals').post(function(req,res){
 tour_router.route('/updateHospitalStatue').post(function(req,res){
     var id = req.body.id
     var st = req.body.st
-    util.checkRedisSessionId(req.sessionID,function(err,object){
-        if(err){
-            res.json({ok: 0});
-        }else{
-            
-            if(object.weight.indexOf('2')<0){
-                res.json({ok: 0});
-                return
-            }
-            db.hospitals.update({statue:st},{where:{id:id}}).then(function(data) {
-                if(data){
-                    res.json({ok: 1});
-                }else {
-                    res.json({ok: 0});
-                }
-            })
+    util.checkRedisSessionId(req.sessionID,res,function(object){
+        if(object.weight.indexOf('2')<0){
+            res.json({ok: g.errorCode.WRONG_WEIGHT});
+            return
         }
+        db.hospitals.update({statue:st},{where:{id:id}}).then(function(data) {
+            if(data){
+                res.json({ok: 1});
+            }else {
+                res.json({ok: 0});
+            }
+        }).catch(function(err){
+            res.json({error:g.errorCode.WRONG_SQL})
+        })
     })
 
 })
 
 tour_router.route('/saveHospitals').post(function(req,res){
-    
     var name = req.body.name
     var host = req.body.host
     var admin = req.body.username
@@ -255,48 +254,42 @@ tour_router.route('/saveHospitals').post(function(req,res){
     var ID = UUID.v1();
     var id = req.body.id || ID
     var source = require('../hospital.json');
-        console.log("更新数据")
-        hData = {id:id,name:name,host:host,statue:0}
-        uData = {hospital_no:id,username:admin,password:password,familyname:admin,weight:'0,1,2,3'}
-        source[id] ={name:name,host:host,statue:0,username:admin,password:password,familyname:admin}
-    // }else{
-    //     console.log("插入数据")
-    //     hData = {id:ID,name:name,host:host,statue:0}
-    //     uData = {hospital_no:ID,username:admin,password:password,familyname:admin,weight:'0,1,2,3'}
-    //     source[ID] ={name:name,host:host,statue:0,username:admin,password:password,familyname:admin}
-    // }
+    console.log("更新数据")
+    hData = {id:id,name:name,host:host,statue:0}
+    uData = {hospital_no:id,username:admin,password:password,familyname:admin,weight:'0,1,2,3'}
+    source[id] ={name:name,host:host,statue:0,username:admin,password:password,familyname:admin}
     var destString = JSON.stringify(source);
-    util.checkRedisSessionId(req.sessionID,function(err,object){
-        if(err){
-            res.json({ok:0})
-        }else{
-            if(object.weight.indexOf('2')<0){
-                res.json({ok: -1});
-                return
-            }
-            db.hospitals.findOne({where:{host:host}}).then(function(data) {
-                console.log(data)
-                if(data){
-                    res.json({ok: -1});
-                }else{
-                    db.hospitals.upsert(hData).then(function (data) {
-                        if (data) {
-                            db.admins.upsert(uData).then(function (data) {
-                                if (data) {
-                                    console.log(destString)
-                                    fs.writeFileSync('./hospital.json', destString);
-                                    res.json({ok: 1, d: data});
-                                } else {
-                                    res.json({ok: 0});
-                                }
-                            })
-                        } else {
-                            res.json({ok: 0});
-                        }
-                    })
-                }
-            })
+    util.checkRedisSessionId(req.sessionID,res,function(object){
+        if(object.weight.indexOf('2')<0){
+            res.json({ok: -1});
+            return
         }
+        db.hospitals.findOne({where:{host:host}}).then(function(data) {
+            console.log(data)
+            if(data){
+                res.json({ok: -1});
+            }else{
+                db.hospitals.upsert(hData).then(function (data) {
+                    if (data) {
+                        db.admins.upsert(uData).then(function (data) {
+                            if (data) {
+                                console.log(destString)
+                                fs.writeFileSync('./hospital.json', destString);
+                                res.json({ok: 1, d: data});
+                            } else {
+                                res.json({ok: 0});
+                            }
+                        }).catch(function(err){
+                            res.json({error:g.errorCode.WRONG_SQL})
+                        })
+                    } else {
+                        res.json({ok: 0});
+                    }
+                }).catch(function(err){
+                    res.json({error:g.errorCode.WRONG_SQL})
+                })
+            }
+        })
     })
 });
 
@@ -304,6 +297,8 @@ tour_router.route('/delHospitals').post(function(req,res){
     var id = req.body.id
     db.hospitals.destroy({where:{id:id}}).then(function(data){
         res.json({d:data});
+    }).catch(function(err){
+        res.json({error:g.errorCode.WRONG_SQL})
     })
 });
 
@@ -330,6 +325,8 @@ tour_router.route('/saveDoctors').post(function(req,res){
     }
     db.doctors.upsert(uData).then(function(data){
         res.json({d:data});
+    }).catch(function(err){
+        res.json({error:g.errorCode.WRONG_SQL})
     })
 });
 
@@ -337,6 +334,8 @@ tour_router.route('/delDoctors').post(function(req,res){
     var id = req.body.id
     db.doctors.destroy({where:{id:id}}).then(function(data){
         res.json({d:data});
+    }).catch(function(err){
+        res.json({error:g.errorCode.WRONG_SQL})
     })
 });
 tour_router.route('/test').get(function(req,respone){
