@@ -9,6 +9,7 @@ var querystring = require('querystring');
 var UUID = require('uuid');
 var fs=require('fs');
 var g = require('../global')
+var weightAdvice_configs = require('../models_yxd/weightAdvice_configs.js');
 
 tour_router.route('/getAdmins').post(function(req,res){
     var os = req.body.offset
@@ -438,7 +439,9 @@ tour_router.route('/find_config').post(function(req,res){
     var os = req.body.offset
     var lmt = req.body.limit
     util.checkRedisSessionId(req.sessionID,res,function(object){
-        db.configs.findAndCountAll({where: {type: type},offset:os,limit:lmt}).then(function (data) {
+        // db.configs.findAndCountAll({where: {type: type},offset:os,limit:lmt}).then(function (data) {
+        weightAdvice_configs.findAndCountAll({offset:os,limit:lmt}).then(function (data) {
+            console.log(data)
             res.json({ok:1,d: data});
         }).catch(function(err){
             console.log(err)
@@ -469,5 +472,7 @@ tour_router.route('/push_config').get(function(req,res){
         })
     })
 });
+
+
 
 module.exports=tour_router;
