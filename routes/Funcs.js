@@ -408,22 +408,22 @@ tour_router.route('/save_config').post(function(req,res){
     var id = req.body.id;
     var start = req.body.start
     var end = req.body.end
-    var size = req.body.size
+    var size = req.body.weight_size
     var sug = req.body.sug
     var diet = req.body.diet
     var sign = req.body.sign
     var type = req.body.type
     util.checkRedisSessionId(req.sessionID,res,function(object){
         if(id){
-            var ud = {start:start,end:end,weight_size:size,sug:con_sug,diet:con_diet,sign:con_sign}
-            db.config.update(ud,{where: {id: id,type:type}}).then(function (data) {
+            var ud = {start:start,end:end,weight_size:size,con_sug:sug,con_diet:diet,con_sign:sign}
+            db.configs.update(ud,{where: {id: id,type:type}}).then(function (data) {
                 res.json({ok:1,d: data});
             }).catch(function(err){
                 res.json({error:g.errorCode.WRONG_SQL})
             })
         }else{
-            var ud = {start:start,end:end,type:type,weight_size:size,sug:con_sug,diet:con_diet,sign:con_sign}
-            db.config.upsert(ud).then(function (data) {
+            var ud = {start:start,end:end,type:type,weight_size:size,con_sug:sug,con_diet:diet,con_sign:sign}
+            db.configs.upsert(ud).then(function (data) {
                 res.json({ok:1,d: data});
             }).catch(function(err){
                 res.json({error:g.errorCode.WRONG_SQL})
@@ -438,9 +438,10 @@ tour_router.route('/find_config').post(function(req,res){
     var os = req.body.offset
     var lmt = req.body.limit
     util.checkRedisSessionId(req.sessionID,res,function(object){
-        db.config.findAndCountAll({where: {type: type},offset:os,limit:lmt}).then(function (data) {
+        db.configs.findAndCountAll({where: {type: type},offset:os,limit:lmt}).then(function (data) {
             res.json({ok:1,d: data});
         }).catch(function(err){
+            console.log(err)
             res.json({error:g.errorCode.WRONG_SQL})
         })
     })
@@ -450,7 +451,7 @@ tour_router.route('/find_config').post(function(req,res){
 tour_router.route('/del_config').post(function(req,res){
     var id = req.body.id;
     util.checkRedisSessionId(req.sessionID,res,function(object){
-        db.config.destroy({where: {id: id}}).then(function (data) {
+        db.configs.destroy({where: {id: id}}).then(function (data) {
             res.json({ok:1,d: data});
         }).catch(function(err){
             res.json({error:g.errorCode.WRONG_SQL})
@@ -458,5 +459,15 @@ tour_router.route('/del_config').post(function(req,res){
     })
 });
 
+//体重评估标准配置
+tour_router.route('/push_config').get(function(req,res){
+    util.checkRedisSessionId(req.sessionID,res,function(object){
+        util.accessOutUrl(g.interface.phoneSer_Addr,g.interface.phoneSer_port,'GET','/api/freshConfig',null,function(body){
+            res.json({ok:1});
+        },function(err){
+            res.json({error:err});
+        })
+    })
+});
 
 module.exports=tour_router;

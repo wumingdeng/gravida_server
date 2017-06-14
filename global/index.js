@@ -9,6 +9,8 @@ module.exports = {
         WRONG_WEIGHT:105, //权限不足
     },
     interface:{
+        phoneSer_Addr:'localhost',
+        phoneSer_port:'8092',
         addr:'180yxd.sujudao.com',
         port:'8097'
     }

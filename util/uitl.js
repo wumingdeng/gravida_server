@@ -6,6 +6,7 @@ var uitl = {}
 var redis = require("redis")
 var http = require("http");
 var client = redis.createClient('6379', '127.0.0.1')
+var g = require('../global')
 
 client.on("ready",function(error){
     console.log("ready")
@@ -34,7 +35,9 @@ uitl.clearSession = function(sid){
 }
 
 uitl.accessOutUrl = function(host,port,method,path,data,sf,ef){
-    data = JSON.stringify(data)
+    if(data){
+        data = JSON.stringify(data)
+    }
     var opt = {
         host:host,
         port:port,
@@ -56,7 +59,9 @@ uitl.accessOutUrl = function(host,port,method,path,data,sf,ef){
     }).on('error', function(e) {
         ef(e.message)
     })
-    _req.write(data + "\n");
+    if(method == "POST"){
+        _req.write(data + "\n");
+    }
     _req.end();
 }
 

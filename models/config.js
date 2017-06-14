@@ -1,6 +1,6 @@
 'use strict';
 module.exports = function(sequelize, DataTypes) {
-  var config = sequelize.define('config', {
+  var configs = sequelize.define('configs', {
     start:DataTypes.INTEGER,
     end: DataTypes.INTEGER,
     weight_size: DataTypes.INTEGER, //体重评估结果
@@ -15,5 +15,5 @@ module.exports = function(sequelize, DataTypes) {
       }
     }
   });
-  return config;
+  return configs;
 };
