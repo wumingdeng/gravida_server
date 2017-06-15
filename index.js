@@ -9,6 +9,7 @@ var path = require('path');
 var process = require('process');
 var cfg = require('./config.json')
 var db = require('./models');
+var yxdDB = require('./models_yxd');
 // api controllers
 var route_table = require('./routes/routeTable');
 var fs=require('fs');
