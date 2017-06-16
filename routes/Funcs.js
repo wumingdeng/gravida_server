@@ -407,8 +407,8 @@ tour_router.route('/getExpInfo').post(function(req,respone){
 //体重评估标准配置
 tour_router.route('/save_config').post(function(req,res){
     var id = req.body.id;
-    var start = req.body.start
-    var end = req.body.end
+    var start = req.body.minWeek
+    var end = req.body.maxWeek
     var size = req.body.weight_size
     var sug = req.body.sug
     var diet = req.body.diet
@@ -416,15 +416,15 @@ tour_router.route('/save_config').post(function(req,res){
     var type = req.body.type
     util.checkRedisSessionId(req.sessionID,res,function(object){
         if(id){
-            var ud = {start:start,end:end,weight_size:size,con_sug:sug,con_diet:diet,con_sign:sign}
-            db.configs.update(ud,{where: {id: id,type:type}}).then(function (data) {
+            var ud = {minWeek:start,maxWeek:end,weight_size:size,con_sug:sug,con_diet:diet,con_sign:sign}
+            yxdDB.weightAdvice_configs.update(ud,{where: {id: id,type:type}}).then(function (data) {
                 res.json({ok:1,d: data});
             }).catch(function(err){
                 res.json({error:g.errorCode.WRONG_SQL})
             })
         }else{
-            var ud = {start:start,end:end,type:type,weight_size:size,con_sug:sug,con_diet:diet,con_sign:sign}
-            db.configs.upsert(ud).then(function (data) {
+            var ud = {minWeek:start,maxWeek:end,type:type,weight_size:size,con_sug:sug,con_diet:diet,con_sign:sign}
+            yxdDB.weightAdvice_configs.upsert(ud).then(function (data) {
                 res.json({ok:1,d: data});
             }).catch(function(err){
                 res.json({error:g.errorCode.WRONG_SQL})
@@ -439,9 +439,8 @@ tour_router.route('/find_config').post(function(req,res){
     var os = req.body.offset
     var lmt = req.body.limit
     util.checkRedisSessionId(req.sessionID,res,function(object){
-        // db.configs.findAndCountAll({where: {type: type},offset:os,limit:lmt}).then(function (data) {
-        yxdDB.weightAdvice_configs.findAndCountAll({offset:os,limit:lmt}).then(function (data) {
-            console.log(data)
+        yxdDB.weightAdvice_configs.findAndCountAll({where: {type: type},offset:os,limit:lmt}).then(function (data) {
+            console.log(data.rows)
             res.json({ok:1,d: data});
         }).catch(function(err){
             console.log(err)
@@ -454,7 +453,7 @@ tour_router.route('/find_config').post(function(req,res){
 tour_router.route('/del_config').post(function(req,res){
     var id = req.body.id;
     util.checkRedisSessionId(req.sessionID,res,function(object){
-        db.configs.destroy({where: {id: id}}).then(function (data) {
+        yxdDB.weightAdvice_configs.destroy({where: {id: id}}).then(function (data) {
             res.json({ok:1,d: data});
         }).catch(function(err){
             res.json({error:g.errorCode.WRONG_SQL})

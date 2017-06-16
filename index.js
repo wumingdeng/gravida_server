@@ -20,7 +20,7 @@ var http = require("http");
 var session = require('express-session');
 var RedisStore = require('connect-redis')(session);
 
-var hour = 3600000
+var hour = 360000000
 app.use(session({
     name:"sid",
     cookie:{
