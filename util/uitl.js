@@ -5,61 +5,71 @@
 var uitl = {}
 var redis = require("redis")
 var http = require("http");
-var client = redis.createClient('6379', '127.0.0.1')
+var config = require('../config.json')
 var g = require('../global')
+if (config.native == 1) {
+    var client = redis.createClient('6379', '127.0.0.1')
+    client.on("ready", function (error) {
+        console.log("ready")
+    })
 
-client.on("ready",function(error){
-    console.log("ready")
-})
-
-client.on("error",function(error){
-    console.log(error)
-})
-
-uitl.checkRedisSessionId = function(sid,res,cd){
-    client.get("sess:"+sid, function(err, object) {
-        console.log("sess:"+sid+':'+object)
-        if(err){
-            res.json({ok:g.errorCode.WRONG_SESSION_ERROR})
-        }else if(object){
-            cd(JSON.parse(object))
-        }else{
-            res.json({ok:g.errorCode.WRONG_SESSION_ERROR})
-        }
-        // cd(err,JSON.parse(object))
+    client.on("error", function (error) {
+        console.log(error)
     })
 }
 
-uitl.clearSession = function(sid){
-    client.set("sess:"+sid,null)
+
+
+
+uitl.checkRedisSessionId = function (sid, res, cd) {
+    if (config.native == 1) {
+        client.get("sess:" + sid, function (err, object) {
+            console.log("sess:" + sid + ':' + object)
+            if (err) {
+                res.json({ ok: g.errorCode.WRONG_SESSION_ERROR })
+            } else if (object) {
+                cd(JSON.parse(object))
+            } else {
+                res.json({ ok: g.errorCode.WRONG_SESSION_ERROR })
+            }
+        })
+    } else {
+        cd({})
+    }
+
+
 }
 
-uitl.accessOutUrl = function(host,port,method,path,data,sf,ef){
-    if(data){
+uitl.clearSession = function (sid) {
+    client.set("sess:" + sid, null)
+}
+
+uitl.accessOutUrl = function (host, port, method, path, data, sf, ef) {
+    if (data) {
         data = JSON.stringify(data)
     }
     var opt = {
-        host:host,
-        port:port,
-        method:method,
-        path:path,
-        headers:{
+        host: host,
+        port: port,
+        method: method,
+        path: path,
+        headers: {
             "Content-Type": 'application/json; charset=utf-8',
         }
     }
-    var _req = http.request(opt, function(res) {
+    var _req = http.request(opt, function (res) {
         res.setEncoding('utf8');
         var str = ""
-        res.on('data',function(d){
+        res.on('data', function (d) {
             str += d;
-        }).on('end', function(){
-            var body=JSON.parse(str);
+        }).on('end', function () {
+            var body = JSON.parse(str);
             sf(body)
         });
-    }).on('error', function(e) {
+    }).on('error', function (e) {
         ef(e.message)
     })
-    if(method == "POST"){
+    if (method == "POST") {
         _req.write(data + "\n");
     }
     _req.end();

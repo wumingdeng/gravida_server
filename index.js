@@ -12,46 +12,46 @@ var db = require('./models');
 var yxdDB = require('./models_yxd');
 // api controllers
 var route_table = require('./routes/routeTable');
-var fs=require('fs');
+var fs = require('fs');
 var api = require('./util/api.js')
 var http = require("http");
 
+if (cfg.native == 1) {
+    var session = require('express-session');
+    var RedisStore = require('connect-redis')(session);
 
-var session = require('express-session');
-var RedisStore = require('connect-redis')(session);
+    var hour = 360000000
+    app.use(session({
+        name: "sid",
+        cookie: {
+            expires: new Date(Date.now() + hour),
+            maxAge: hour,
+        },
+        saveUninitialized: false,
+        resave: true,
+        store: new RedisStore({
+            host: '127.0.0.1',
+            port: '6379'
+        }),
+        secret: 'fizzo'
+    }));
 
-var hour = 360000000
-app.use(session({
-    name:"sid",
-    cookie:{
-        expires:new Date(Date.now() + hour),
-        maxAge:hour,
-    },
-    saveUninitialized : false,
-    resave : true,
-    store: new RedisStore({
-        host:'127.0.0.1',
-        port:'6379'
-    }),
-    secret: 'fizzo'
-}));
-
-app.use(function (req, res, next) {
-    if (!req.session) {
-        return next(new Error('oh no')) // handle error
-    }
-    next()
-})
-
+    app.use(function (req, res, next) {
+        if (!req.session) {
+            return next(new Error('oh no')) // handle error
+        }
+        next()
+    })
+}
 app.use(bodyParser.json());
-app.use(bodyParser.urlencoded({extended: false}));
+app.use(bodyParser.urlencoded({ extended: false }));
 
 // init routes// static pages if needed
 app.use(express.static(path.join(__dirname, 'static')));
 //app.get('/',function(req,res){
 //    res.write("<html><h1>svn</h1></html>");
 //});
-app.all('*', function(req, res, next) {
+app.all('*', function (req, res, next) {
     res.header("Access-Control-Allow-Origin", req.headers.origin);
     res.header("Access-Control-Allow-Headers", "Origin, X-Requested-With, Content-Type, Accept");
     res.header("Access-Control-Allow-Credentials", true);
@@ -63,8 +63,8 @@ app.all('*', function(req, res, next) {
 // middleware register
 
 // api router
-for(var key in route_table){
-    app.use('/api',route_table[key]);
+for (var key in route_table) {
+    app.use('/api', route_table[key]);
 }
 
 app.set('port', cfg.listen);
@@ -91,7 +91,7 @@ process.on('uncaughtException', function (err) {
 //   });
 // });
 
-var server = app.listen(app.get('port'), function() {
+var server = app.listen(app.get('port'), function () {
     console.log('server listening on port ' + server.address().port);
 });
 

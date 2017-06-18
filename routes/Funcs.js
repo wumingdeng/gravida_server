@@ -181,17 +181,18 @@ tour_router.route('/getTodo').get(function(req,res){
 });
 
 tour_router.route('/login').post(function(req,res){
-    console.log("session:"+req.sessionID)
     var un = req.body.username
     var pw = req.body.password
     var h_no = req.body.h_no || '1'
     var filterCol = {username:un,password:pw,hospital_no:h_no}
     db.admins.findOne({where:filterCol}).then((data)=>{
         if(data){
-            req.session.username = un
-            req.session.weight = data.dataValues.weight
-            req.session.login = true
-            req.session.h_no = h_no
+            if(req.session){
+                req.session.username = un
+                req.session.weight = data.dataValues.weight
+                req.session.login = true
+                req.session.h_no = h_no
+            }
             res.json({ok:1,d:data.dataValues});
         }else{
             res.json({ok:0})
@@ -405,31 +406,42 @@ tour_router.route('/getExpInfo').post(function(req,respone){
 
 
 //体重评估标准配置
-tour_router.route('/save_config').post(function(req,res){
-    var id = req.body.id;
+tour_router.route('/save_weight_config').post(function(req,res){
+    var id = req.body.id 
     var start = req.body.minWeek
     var end = req.body.maxWeek
-    var size = req.body.weight_size
+    var size = req.body.type
     var sug = req.body.sug
     var diet = req.body.diet
-    var sign = req.body.sign
-    var type = req.body.type
+    var ud = {minweek:start,maxweek:end,type:size,con_sug:sug,con_diet:diet}
+    if(id)
+        ud.id = id
     util.checkRedisSessionId(req.sessionID,res,function(object){
-        if(id){
-            var ud = {minWeek:start,maxWeek:end,weight_size:size,con_sug:sug,con_diet:diet,con_sign:sign}
-            yxdDB.weightAdvice_configs.update(ud,{where: {id: id,type:type}}).then(function (data) {
-                res.json({ok:1,d: data});
-            }).catch(function(err){
-                res.json({error:g.errorCode.WRONG_SQL})
-            })
-        }else{
-            var ud = {minWeek:start,maxWeek:end,type:type,weight_size:size,con_sug:sug,con_diet:diet,con_sign:sign}
-            yxdDB.weightAdvice_configs.upsert(ud).then(function (data) {
-                res.json({ok:1,d: data});
-            }).catch(function(err){
-                res.json({error:g.errorCode.WRONG_SQL})
-            })
-        }
+        var ud = 
+        yxdDB.weightAdvice_configs.upsert(ud).then(function (data) {
+            res.json({ok:1,d: data});
+        }).catch(function(err){
+            res.json({error:g.errorCode.WRONG_SQL})
+        })
+    })
+});
+
+//饮食配置
+tour_router.route('/save_diet_config').post(function(req,res){
+    var id = req.body.id;
+    var start = req.body.minweek
+    var end = req.body.maxweek
+    var content = req.body.sug
+    var type = req.body.type
+    var ud = {minweek:start,maxweek:end,type:type,con_sug:content}
+    if(id)
+        ud.id = id
+    util.checkRedisSessionId(req.sessionID,res,function(object){
+        yxdDB.weight_diet_configs.upsert(ud).then(function (data) {
+            res.json({ok:1,d: data});
+        }).catch(function(err){
+            res.json({error:g.errorCode.WRONG_SQL})
+        })
     })
 });
 
@@ -439,8 +451,13 @@ tour_router.route('/find_config').post(function(req,res){
     var os = req.body.offset
     var lmt = req.body.limit
     util.checkRedisSessionId(req.sessionID,res,function(object){
-        yxdDB.weightAdvice_configs.findAndCountAll({where: {type: type},offset:os,limit:lmt}).then(function (data) {
-            console.log(data.rows)
+        var db = {}
+        if(type == 0){
+            db =  yxdDB.weight_diet_configs
+        }else{
+            db =  yxdDB.weightAdvice_configs
+        }
+        db.findAndCountAll({offset:os,limit:lmt}).then(function (data) {
             res.json({ok:1,d: data});
         }).catch(function(err){
             console.log(err)
@@ -452,8 +469,15 @@ tour_router.route('/find_config').post(function(req,res){
 //体重评估标准配置
 tour_router.route('/del_config').post(function(req,res){
     var id = req.body.id;
+    var type = req.body.type;
+    var db = {}
+    if(type == 0){
+        db =  yxdDB.weight_diet_configs
+    }else{
+        db =  yxdDB.weightAdvice_configs
+    }
     util.checkRedisSessionId(req.sessionID,res,function(object){
-        yxdDB.weightAdvice_configs.destroy({where: {id: id}}).then(function (data) {
+       db.destroy({where: {id: id}}).then(function (data) {
             res.json({ok:1,d: data});
         }).catch(function(err){
             res.json({error:g.errorCode.WRONG_SQL})
@@ -461,7 +485,7 @@ tour_router.route('/del_config').post(function(req,res){
     })
 });
 
-//体重评估标准配置
+//更新配置文件
 tour_router.route('/push_config').get(function(req,res){
     util.checkRedisSessionId(req.sessionID,res,function(object){
         util.accessOutUrl(g.interface.phoneSer_Addr,g.interface.phoneSer_port,'GET','/api/freshConfig',null,function(body){

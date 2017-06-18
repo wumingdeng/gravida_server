@@ -5,6 +5,7 @@
     "database": "gravida",
     "host": "121.40.254.174",
     "dialect": "mysql",
-    "sqldebug":false
+    "sqldebug":false,
+    "native":0
   }
 }
