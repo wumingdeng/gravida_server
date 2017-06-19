@@ -450,6 +450,11 @@ tour_router.route('/find_config').post(function(req,res){
     var type = req.body.type;
     var os = req.body.offset
     var lmt = req.body.limit
+    var filter_type = req.body.ft
+    var option = {offset:os,limit:lmt}
+    if(filter_type){
+        option.where={type:filter_type}
+    }
     util.checkRedisSessionId(req.sessionID,res,function(object){
         var db = {}
         if(type == 0){
@@ -457,7 +462,7 @@ tour_router.route('/find_config').post(function(req,res){
         }else{
             db =  yxdDB.weightAdvice_configs
         }
-        db.findAndCountAll({offset:os,limit:lmt}).then(function (data) {
+        db.findAndCountAll(option).then(function (data) {
             res.json({ok:1,d: data});
         }).catch(function(err){
             console.log(err)

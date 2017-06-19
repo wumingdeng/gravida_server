@@ -20,11 +20,11 @@ if (cfg.native == 1) {
     var session = require('express-session');
     var RedisStore = require('connect-redis')(session);
 
-    var hour = 360000000
+    var Days = 10
     app.use(session({
         name: "sid",
         cookie: {
-            expires: new Date(Date.now() + hour),
+            expires: new Date(Date.now() + Days * 24 * 60 * 60 * 1000),
             maxAge: hour,
         },
         saveUninitialized: false,
