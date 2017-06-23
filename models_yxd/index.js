@@ -5,16 +5,18 @@ var basename  = path.basename(module.filename);
 var env       = process.env.NODE_ENV || 'development';
 var db        = {};
 
-// database initialize
-var sequelize = new Sequelize('yxdDB', 'root', '2932615qian', {
-  host: '121.40.254.174',
-  dialect: 'mysql',
+var config = require('../config_121.json')
+
+var sequelize = new Sequelize(config.dbname, config.user, config.pass, {
+  host: config.dbaddr,
+  port:config.port,
+  dialect: config.dialect,
   pool: {
-    max: 5,
+    max: config.poolsize,
     min: 0,
     idle: 10000
   },
-  logging: false
+  logging: config.sqldebug
 });
 
 // schema miration

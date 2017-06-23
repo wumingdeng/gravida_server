@@ -408,16 +408,14 @@ tour_router.route('/getExpInfo').post(function(req,respone){
 //体重评估标准配置
 tour_router.route('/save_weight_config').post(function(req,res){
     var id = req.body.id 
-    var start = req.body.minWeek
-    var end = req.body.maxWeek
+    var start = req.body.minweek
+    var end = req.body.maxweek
     var size = req.body.type
     var sug = req.body.sug
     var diet = req.body.diet
     var ud = {minweek:start,maxweek:end,type:size,con_sug:sug,con_diet:diet}
-    if(id)
-        ud.id = id
+    if(id){ud.id = id}
     util.checkRedisSessionId(req.sessionID,res,function(object){
-        var ud = 
         yxdDB.weightAdvice_configs.upsert(ud).then(function (data) {
             res.json({ok:1,d: data});
         }).catch(function(err){
@@ -493,7 +491,9 @@ tour_router.route('/del_config').post(function(req,res){
 //更新配置文件
 tour_router.route('/push_config').get(function(req,res){
     util.checkRedisSessionId(req.sessionID,res,function(object){
+        console.log('push_config')
         util.accessOutUrl(g.interface.phoneSer_Addr,g.interface.phoneSer_port,'GET','/api/freshConfig',null,function(body){
+            console.log('push success')
             res.json({ok:1});
         },function(err){
             res.json({error:err});
