@@ -92,7 +92,10 @@ tour_router.route('/getOrders').post(function(req,res){
     var lmt = req.body.limit
     var s = req.body.status
 
-    db.orders.findAndCountAll({where:{status:s},offset:os,limit:lmt,include: [{model: db.goods}]}).then(function(data){
+    // db.orders.findAndCountAll({where:{status:s},offset:os,limit:lmt,include: [{model: db.goods}]}).then(function(data){
+    //     res.json({d:data});
+    // })
+    yxdDB.orders.findAndCountAll({where:{status:s},offset:os,limit:lmt,include: [{model: yxdDB.products}]}).then(function(data){
         res.json({d:data});
     })
 
@@ -103,7 +106,7 @@ tour_router.route('/updateOrders').post(function(req,res){
     var oid = req.body.id
     var st = req.body.status
     util.checkRedisSessionId(req.sessionID,res,function(object){
-        db.orders.update({status:st},{where:{id:oid}}).then((data)=>{
+        yxdDB.orders.update({status:st},{where:{id:oid}}).then((data)=>{
             res.json({ok:1});
         }).catch(function(err){
             res.json({error:g.errorCode.WRONG_SQL})
@@ -500,7 +503,5 @@ tour_router.route('/push_config').get(function(req,res){
         })
     })
 });
-
-
 
 module.exports=tour_router;

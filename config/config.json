@@ -6,6 +6,6 @@
     "host": "121.40.254.174",
     "dialect": "mysql",
     "sqldebug":false,
-    "native":0
+    "native":1
   }
 }
