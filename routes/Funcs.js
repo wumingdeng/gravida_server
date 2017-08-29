@@ -95,7 +95,7 @@ tour_router.route('/getOrders').post(function(req,res){
     // db.orders.findAndCountAll({where:{status:s},offset:os,limit:lmt,include: [{model: db.goods}]}).then(function(data){
     //     res.json({d:data});
     // })
-    yxdDB.orders.findAndCountAll({where:{status:s},offset:os,limit:lmt,include: [{model: yxdDB.products}]}).then(function(data){
+    yxdDB.orders.findAndCountAll({where:{status:s},offset:os,order:'createtime DESC',limit:lmt,include: [{model: yxdDB.products}]}).then(function(data){
         res.json({d:data});
     })
 
@@ -105,8 +105,16 @@ tour_router.route('/getOrders').post(function(req,res){
 tour_router.route('/updateOrders').post(function(req,res){
     var oid = req.body.id
     var st = req.body.status
+    var update = {status:st}
+    if(st==3 && req.body.com_no && req.body.exp_order_no){
+        update.exp_com_no = req.body.com_no
+        update.exp_no = req.body.exp_order_no
+    }else if(st==3){
+        res.json({ok:10});
+        return
+    }
     util.checkRedisSessionId(req.sessionID,res,function(object){
-        yxdDB.orders.update({status:st},{where:{id:oid}}).then((data)=>{
+        yxdDB.orders.update(update,{where:{id:oid}}).then((data)=>{
             res.json({ok:1});
         }).catch(function(err){
             res.json({error:g.errorCode.WRONG_SQL})

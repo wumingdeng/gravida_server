@@ -20,7 +20,10 @@ module.exports = function(sequelize, DataTypes) {
     price:DataTypes.INTEGER,
     remark:DataTypes.STRING,
     createtime:DataTypes.BIGINT,
-    status:DataTypes.INTEGER
+    status:DataTypes.INTEGER,
+    reference:DataTypes.STRING,
+    exp_no:DataTypes.STRING,
+    exp_com_no:DataTypes.STRING
   },{
     classMethods: {
       associate: function(models) {
