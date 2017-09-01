@@ -5,8 +5,9 @@
 var uitl = {}
 var redis = require("redis")
 var http = require("http");
-var config = require('../config.json')
 var g = require('../global')
+var config = g.cfg
+
 if (config.native == 1) {
     var client = redis.createClient('6379', '127.0.0.1')
     client.on("ready", function (error) {

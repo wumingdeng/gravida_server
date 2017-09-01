@@ -3,5 +3,6 @@
  */
 
 module.exports={
-    Funcs:require('./Funcs')
+    Funcs:require('./Funcs'),
+    storage:require('./storage')
 }

@@ -4,6 +4,7 @@
     "user":"root",
     "pass":"2932615qian",
     "dbname":"gravida",
+    "dbname_yxd":"yxdDB",
     "dialect":"mysql",
     "poolsize":5,
     "listen":8101,

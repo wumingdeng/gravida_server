@@ -8,8 +8,10 @@ module.exports = function(sequelize, DataTypes) {
     type:DataTypes.STRING,
     smallPic:DataTypes.STRING,
     discount: DataTypes.INTEGER,
-    introNum: DataTypes.INTEGER
+    introNum: DataTypes.INTEGER,
+    pid:DataTypes.STRING
   },{
+    timestamps:false,
     classMethods: {
       associate: function(models) {
         // associations can be defined here

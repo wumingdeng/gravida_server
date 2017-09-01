@@ -1,3 +1,4 @@
+var config = require('../config.json')
 module.exports = {
     errorCode:{
         WRONG_SESSION_ERROR:-2, //session 异常
@@ -13,5 +14,6 @@ module.exports = {
         phoneSer_port:'8092',
         addr:'180yxd.sujudao.com',
         port:'8097'
-    }
+    },
+    cfg:config
 }

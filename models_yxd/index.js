@@ -5,9 +5,10 @@ var basename  = path.basename(module.filename);
 var env       = process.env.NODE_ENV || 'development';
 var db        = {};
 
-var config = require('../config_121.json')
+var g = require('../global')
+var config = g.cfg
 
-var sequelize = new Sequelize(config.dbname, config.user, config.pass, {
+var sequelize = new Sequelize(config.dbname_yxd, config.user, config.pass, {
   host: config.dbaddr,
   port:config.port,
   dialect: config.dialect,

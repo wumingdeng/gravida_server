@@ -25,6 +25,7 @@ module.exports = function(sequelize, DataTypes) {
     exp_no:DataTypes.STRING,
     exp_com_no:DataTypes.STRING
   },{
+    timestamps:false,
     classMethods: {
       associate: function(models) {
         // associations can be defined here
