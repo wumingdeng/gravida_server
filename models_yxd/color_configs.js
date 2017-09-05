@@ -1,11 +1,8 @@
 'use strict';
 module.exports = function(sequelize, DataTypes) {
-  var gravida_storage_configs = sequelize.define('gravida_storage_configs', {
-    pid:DataTypes.STRING,
-    name:DataTypes.STRING,
+  var gravida_color_configs = sequelize.define('gravida_color_configs', {
+    index:DataTypes.INTEGER,
     color:DataTypes.STRING,
-    size:DataTypes.INTEGER,
-    color_place:DataTypes.INTEGER
   },{
     timestamps:false,
     classMethods: {
@@ -14,5 +11,5 @@ module.exports = function(sequelize, DataTypes) {
       }
     }
   });
-  return gravida_storage_configs;
+  return gravida_color_configs;
 };
