@@ -17,6 +17,9 @@ var fs = require('fs');
 var api = require('./util/api.js')
 var http = require("http");
 
+var mem = require('./memory')
+mem.f.InitDbMemory()
+
 if (cfg.native == 1) {
     var session = require('express-session');
     var RedisStore = require('connect-redis')(session);

@@ -1,7 +1,7 @@
 
 var data = {
-    storage_configs:{},
-    color_configs:{},
-    desc_configs:{},
+    gravida_storage_configs:{},
+    gravida_color_configs:{},
+    gravida_desc_configs:{},
 }
 module.exports = data;

@@ -1,6 +1,6 @@
 
 var m = require('./memoryVarible')
-var db = require('../models')
+var db = require('../models_yxd')
 var mod = {
     ReloadMemory :function(tbl){
         // reload all
@@ -15,15 +15,15 @@ var mod = {
     InitDbMemory :function(){
         db.gravida_storage_configs.findAll().then(function(data){
             for(var i = 0;i<data.length;i++){
-                m.storage_configs[data[i].id]=data[i].dataValues
+                m.gravida_storage_configs[data[i].pid]=data[i].dataValues
             }
             db.gravida_desc_configs.findAll().then(function(data2){
                 for(var i = 0;i<data2.length;i++){
-                    m.desc_configs[data2[i].id]=data2[i].dataValues
+                    m.gravida_desc_configs[data2[i].id]=data2[i].dataValues
                 }
                 db.gravida_color_configs.findAll().then(function(data3){
                     for(var i = 0;i<data3.length;i++){
-                        m.color_configs[data3[i].id]=data3[i].dataValues
+                        m.gravida_color_configs[data3[i].id]=data3[i].dataValues
                     }
                 })
             })

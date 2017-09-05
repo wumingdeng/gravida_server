@@ -4,5 +4,6 @@
 
 module.exports={
     Funcs:require('./Funcs'),
-    storage:require('./storage')
+    Storage:require('./storage'),
+    Commdata:require('./commdata')
 }

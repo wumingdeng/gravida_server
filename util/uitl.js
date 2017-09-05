@@ -41,8 +41,12 @@ uitl.checkRedisSessionId = function (sid, res, cd) {
 
 }
 
-uitl.clearSession = function (sid) {
-    client.set("sess:" + sid, null)
+uitl.clearSession = function (req) {
+    if(config.native == 1){
+        client.set("sess:" + req.sessionID, null)
+        req.session.destroy()
+    }
+        
 }
 
 uitl.accessOutUrl = function (host, port, method, path, data, sf, ef) {

@@ -101,14 +101,17 @@ tour_router.route('/getGoodsConfig').post(function (req, res) {
 tour_router.route('/saveGoodsConfig').post(function (req, res) {
     var _id = req.body.id
     var _pid = req.body.pid
+    var _color = req.body.color.toString() 
+    var _size = req.body.size.toString() 
     var _name = req.body.name || ''
     var _desc = req.body.desc || ''
-    var filter = { pid: _pid, name: _name, desc: _desc }
+    var filter = { pid: _pid, name: _name, color:_color,size:_size }
     if (_id) {
         filter.id = _id
     }
     util.checkRedisSessionId(req.sessionID, res, function (object) {
         yxdDB.gravida_storage_configs.upsert(filter).then((data) => {
+            m.f.ReloadMemory('gravida_storage_configs')
             console.log(data)
             res.json({ ok: 1 });
         })
@@ -124,6 +127,7 @@ tour_router.route('/delGoodsConfig').post(function (req, res) {
     }
     util.checkRedisSessionId(req.sessionID, res, function (object) {
         yxdDB.gravida_storage_configs.destroy({ where: { id: _id } }).then((data) => {
+            m.f.ReloadMemory('gravida_storage_configs')
             res.json({ ok: 1 });
         })
     })

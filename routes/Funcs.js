@@ -236,8 +236,7 @@ tour_router.route('/login').post(function (req, res) {
 tour_router.route('/signOut').get(function (req, res) {
     console.log("signOut")
     util.checkRedisSessionId(req.sessionID, res, function (object) {
-        util.clearSession(req.sessionID)
-        req.session.destroy()
+        util.clearSession(req)
     })
     res.json({ ok: 1 })
 });
