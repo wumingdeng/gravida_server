@@ -8,6 +8,8 @@ common_router.route('/getStorageConfigs').get(function(req,res){
     res.json({ok:mem.m})
 });
 
+
+
 common_router.route('/freshConfig').get(function(req,res){
     mem.f.InitDbMemory()
     res.json({ok:0});

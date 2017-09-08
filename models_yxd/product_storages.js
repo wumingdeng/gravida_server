@@ -1,6 +1,6 @@
 'use strict';
 module.exports = function(sequelize, DataTypes) {
-  var product_storages = sequelize.define('gravida_product_storages', {
+  var gravida_product_storages = sequelize.define('gravida_product_storages', {
     pid:DataTypes.STRING,
     color:DataTypes.INTEGER,
     size:DataTypes.INTEGER,
@@ -9,8 +9,9 @@ module.exports = function(sequelize, DataTypes) {
     classMethods: {
       associate: function(models) {
         // associations can be defined here
+        models.gravida_product_storages.belongsTo(models.gravida_storage_configs,{foreignKey:'pid',targetKey:'pid',sourceKey:'pid'})
       }
     }
   });
-  return product_storages;
+  return gravida_product_storages;
 };

@@ -25,7 +25,6 @@ if (config.native == 1) {
 uitl.checkRedisSessionId = function (sid, res, cd) {
     if (config.native == 1) {
         client.get("sess:" + sid, function (err, object) {
-            console.log("sess:" + sid + ':' + object)
             if (err) {
                 res.json({ ok: g.errorCode.WRONG_SESSION_ERROR })
             } else if (object) {
@@ -43,7 +42,7 @@ uitl.checkRedisSessionId = function (sid, res, cd) {
 
 uitl.clearSession = function (req) {
     if(config.native == 1){
-        client.set("sess:" + req.sessionID, null)
+        client.set("sess:" + req.sessionID,'')
         req.session.destroy()
     }
         

@@ -11,6 +11,8 @@ module.exports = function(sequelize, DataTypes) {
     classMethods: {
       associate: function(models) {
         // associations can be defined here
+        models.gravida_storage_configs.hasMany(models.gravida_product_storages,{foreignKey:'pid',sourceKey:'pid'})
+        models.gravida_storage_configs.hasMany(models.gravida_storage_records,{foreignKey:'pid',sourceKey:'pid'})
       }
     }
   });

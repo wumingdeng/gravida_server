@@ -92,7 +92,14 @@ tour_router.route('/getOrders').post(function (req, res) {
     var lmt = req.body.limit
     var s = req.body.status
 
-    yxdDB.orders.findAndCountAll({ where: { status: s }, offset: os, order: 'createtime DESC', limit: lmt, include: [{ model: yxdDB.products }] }).then(function (data) {
+    yxdDB.orders.findAndCountAll({where: { status: s }, offset: os, order: 'createtime DESC', limit: lmt, include: [{ model: yxdDB.products }] }).then(function (data) {
+        res.json({ d: data });
+    })
+
+});
+
+tour_router.route('/getOrdersCount').get(function (req, res) {
+    yxdDB.orders.findAndCountAll({attributes:['status'], group:'status'}).then(function (data) {
         res.json({ d: data });
     })
 
@@ -116,7 +123,7 @@ tour_router.route('/updateOrders').post(function (req, res) {
     }
     util.checkRedisSessionId(req.sessionID, res, function (object) {
         if(st == 3){
-            yxdDB.product_storages.findOne({ where: { color: _color, pid: _pid, size: _size } }).then((data) => {
+            yxdDB.gravida_product_storages.findOne({ where: { color: _color, pid: _pid, size: _size } }).then((data) => {
                 if (data && data.amount >= _amount) {
                     //出库的行为
                     data.decrement('amount', { by: _amount }).then(function (d) {
@@ -125,7 +132,7 @@ tour_router.route('/updateOrders').post(function (req, res) {
                         }).catch(function (err) {
                             res.json({ error: g.errorCode.WRONG_SQL })
                         })
-                        yxdDB.storage_records.create({ pid: _pid, type: 2, desc: 4, amount: _amount, createtime: Math.floor(Date.now() / 1000) }).then((data) => {
+                        yxdDB.gravida_storage_configs.create({ pid: _pid, type: 2, desc: 4, amount: _amount, createtime: Math.floor(Date.now() / 1000) }).then((data) => {
                             console.log(data)
                         })
                         res.json({ ok: 1 });
@@ -149,8 +156,8 @@ tour_router.route('/getOrdersBylike').post(function (req, res) {
     var lmt = req.body.limit
     var value = req.body.v
     var status = req.body.status
-    var ud = [{ custom_phone: { $like: '%' + value + '%' } }, { custom: { $like: '%' + value + '%' } }, { id: { $like: '%' + value + '%' } }]
-    yxdDB.orders.findAndCountAll({ where: { $or: ud, $and: { status: status } }, offset: os, limit: lmt }).then(function (data) {
+    var ud = [{ tel: { $like: '%' + value + '%' } }, { contact: { $like: '%' + value + '%' } }, { id: { $like: '%' + value + '%' } }]
+    yxdDB.orders.findAndCountAll({ where: { $or: ud, $and: { status: status } }, offset: os, limit: lmt ,include: [{ model: yxdDB.products }]}).then(function (data) {
         res.json({ d: data });
     })
 });

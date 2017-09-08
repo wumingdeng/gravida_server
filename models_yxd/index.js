@@ -17,7 +17,7 @@ var sequelize = new Sequelize(config.dbname_yxd, config.user, config.pass, {
     min: 0,
     idle: 10000
   },
-  logging: true
+  logging: false
 });
 
 // schema miration

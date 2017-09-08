@@ -6,6 +6,7 @@ var api = require('../util/api.js')
 var UUID = require('uuid');
 var g = require('../global')
 var yxdDB = require('../models_yxd');
+var mem = require('../memory')
 
 tour_router.route('/getStorage_records').post(function (req, res) {
     var os = req.body.offset
@@ -22,6 +23,7 @@ tour_router.route('/getStorage_records').post(function (req, res) {
         }
         filter.where = ud
     }
+    filter.include = [{model: yxdDB.gravida_storage_configs}]
     yxdDB.gravida_storage_records.findAndCountAll(filter).then(function (data) {
         res.json({ d: data });
     })
@@ -36,6 +38,7 @@ tour_router.route('/getStorages').post(function (req, res) {
         var ud = { $or: [{ pid: { $like: '%' + value.pid + '%' } }] }
         filter.where = ud
     }
+    filter.include = [{model: yxdDB.gravida_storage_configs}]
     yxdDB.gravida_product_storages.findAndCountAll(filter).then(function (data) {
         res.json({ d: data });
     })
@@ -54,12 +57,12 @@ tour_router.route('/saveGoods').post(function (req, res) {
 
     util.checkRedisSessionId(req.sessionID, res, function (object) {
         yxdDB.gravida_product_storages.findOne({ where: { color: _color, pid: _pid, size: _size } }).then((data) => {
-            console.log(data);
             if (data) {
                 console.log(data.amount);
                 //出库 且 库存量小于出库的需求量
                 if(_type == 2&&Math.abs(_amount)>data.amount){
                     res.json({ ok: 0 });
+                    return
                 }else{
                     data.increment('amount', { by: _amount }).then(function (user) {
                         res.json({ ok: 1 });
@@ -76,7 +79,7 @@ tour_router.route('/saveGoods').post(function (req, res) {
                 res.json({ ok:-1 });
                 return
             }
-            yxdDB.gravida_storage_records.create({ pid: _pid, type: _type, desc: _desc, amount: _amount, createtime: Math.floor(Date.now() / 1000) }).then((data) => {
+            yxdDB.gravida_storage_records.create({ pid: _pid, type: _type, desc: _desc, color:_color,size:_size,amount: _amount,desc_con:_desc_con,createtime: Math.floor(Date.now() / 1000) }).then((data) => {
                 console.log("添加记录");
             })
         })
@@ -111,9 +114,9 @@ tour_router.route('/saveGoodsConfig').post(function (req, res) {
     }
     util.checkRedisSessionId(req.sessionID, res, function (object) {
         yxdDB.gravida_storage_configs.upsert(filter).then((data) => {
-            m.f.ReloadMemory('gravida_storage_configs')
-            console.log(data)
-            res.json({ ok: 1 });
+            mem.f.ReloadMemory('gravida_storage_configs',()=>{
+                res.json({ok: mem.m.gravida_storage_configs});
+            })
         })
     })
 });
@@ -127,8 +130,126 @@ tour_router.route('/delGoodsConfig').post(function (req, res) {
     }
     util.checkRedisSessionId(req.sessionID, res, function (object) {
         yxdDB.gravida_storage_configs.destroy({ where: { id: _id } }).then((data) => {
-            m.f.ReloadMemory('gravida_storage_configs')
-            res.json({ ok: 1 });
+            mem.f.ReloadMemory('gravida_storage_configs',()=>{
+                res.json({ok: mem.m.gravida_storage_configs});
+            })
+        })
+    })
+});
+
+// 获取颜色的配置信息
+tour_router.route('/getColorConfigs').post(function(req,res){
+    var os = req.body.offset
+    var lmt = req.body.limit
+    var _v = req.body.v
+    var filter = { offset: os, limit: lmt }
+    if (_v) {
+        var ud = {}
+        if (_v.color != '') {
+            ud.color = { $like: '%' + _v.color + '%' } 
+            filter.where = ud
+        }
+    }
+    yxdDB.gravida_color_configs.findAndCountAll(filter).then((data) => {
+        res.json({ d: data });
+    })
+});
+
+tour_router.route('/saveColorConfig').post(function (req, res) {
+    var _id = req.body.id
+    var _color = req.body.color
+    var filter = {color:_color}
+    if (_id) {
+        filter.id = _id
+    }
+    util.checkRedisSessionId(req.sessionID, res, function (object) {
+        yxdDB.gravida_color_configs.upsert(filter).then((data) => {
+            mem.f.ReloadMemory('gravida_color_configs',()=>{
+                res.json({ ok: mem.m.gravida_color_configs});
+            })
+        })
+    })
+});
+
+tour_router.route('/delColorConfig').post(function (req, res) {
+    var _id = req.body.id
+    console.log(_id)
+    if (!_id) {
+        res.json({ ok: 0 });
+        return
+    }
+    util.checkRedisSessionId(req.sessionID, res, function (object) {
+        yxdDB.gravida_color_configs.destroy({ where: { id: _id } }).then((data) => {
+            mem.f.ReloadMemory('gravida_color_configs',()=>{
+                res.json({ ok: mem.m.gravida_color_configs});
+            })
+            
+        })
+    })
+});
+
+// 获取原因的配置信息
+tour_router.route('/getDescConfigs').post(function(req,res){
+    var os = req.body.offset
+    var lmt = req.body.limit
+    var _v = req.body.v
+    var filter = { offset: os, limit: lmt }
+    if (_v) {
+        var ud = {}
+        if (_v.type != '') {
+            ud.type = _v.type
+        }
+        if (_v.desc != '') {
+            ud.desc = { $like: '%' + _v.desc + '%' } 
+        }
+        filter.where = ud
+    }
+    yxdDB.gravida_desc_configs.findAndCountAll(filter).then((data) => {
+        res.json({ d: data });
+    })
+});
+
+
+tour_router.route('/saveDescConfig').post(function (req, res) {
+    var _id = req.body.id
+    var _type = req.body.type
+    var _index = Number(req.body.index)
+    var _desc = req.body.desc || ''
+    var filter = {desc: _desc}
+    if (_id) {
+        filter.id = _id
+    }else{
+        filter.index = ++_index
+        filter.type = _type
+    }
+    util.checkRedisSessionId(req.sessionID, res, function (object) {
+        yxdDB.gravida_desc_configs.upsert(filter).then((data) => {
+            mem.f.ReloadMemory('gravida_desc_configs',()=>{
+                res.json({ ok: mem.m.gravida_desc_configs});
+            })
+        })
+    })
+});
+
+tour_router.route('/delDescConfig').post(function (req, res) {
+    var _id = req.body.id
+    var _type = req.body.type
+    var _idx = req.body.index
+    if (!_id) {
+        res.json({ ok: 0 });
+        return
+    }
+    util.checkRedisSessionId(req.sessionID, res, function (object) {
+        yxdDB.gravida_storage_records.findOne({where:{type:_type,desc:_idx}}).then((data)=>{
+            if(data){
+                res.json({ err:0 });
+            }else{
+                yxdDB.gravida_desc_configs.destroy({ where: { id: _id } }).then((data) => {
+                    mem.f.ReloadMemory('gravida_desc_configs',()=>{
+                        res.json({ ok: mem.m.gravida_desc_configs });
+                    })
+                })
+            }
         })
     })
 });

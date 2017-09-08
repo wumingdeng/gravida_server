@@ -15,5 +15,17 @@ module.exports = {
         addr:'180yxd.sujudao.com',
         port:'8097'
     },
+    orderStatus:{
+        NOTPAY:0,   //已下单 待支付
+        PAYED_NO_DELIVER:1, //已支付 待备货
+        DELIVER_NO_CHOICE:2,   //已备货 待发货
+        DELIVER_NO_RECEIPT:3,   //已发货 待收货
+        RECEIPT_NO_EVALUATE:4,  //已确认送达 待评价
+        FINISH:5,    //已评价
+        CANCELED:6,  //用户取消订单
+        REFUND:7,    //已退款
+        AUTO_RECEIPT:8,  //时间到默认收货
+        AUTO_CANCELED:9  //时间到默认取消
+      },
     cfg:config
 }

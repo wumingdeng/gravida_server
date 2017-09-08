@@ -2,15 +2,26 @@
 var m = require('./memoryVarible')
 var db = require('../models_yxd')
 var mod = {
-    ReloadMemory :function(tbl){
+    ReloadMemory :function(tbl,fb){
         // reload all
         // configs,swipe_configs,services,catalogs,work_services
-        db[tbl].findAll().then(function(data){
-            m[tbl] = {}
-            for(var i = 0;i<data.length;i++){
-                m[tbl][data[i].id]=data[i].dataValues
-            }
-        })
+        if(tbl=='gravida_storage_configs'){
+            db[tbl].findAll().then(function(data){
+                m[tbl] = {}
+                for(var i = 0;i<data.length;i++){
+                    m[tbl][data[i].pid]=data[i].dataValues
+                }
+                fb()
+            })
+        }else{
+            db[tbl].findAll().then(function(data){
+                m[tbl] = {}
+                for(var i = 0;i<data.length;i++){
+                    m[tbl][data[i].id]=data[i].dataValues
+                }
+                fb()
+            })
+        }
     },
     InitDbMemory :function(){
         db.gravida_storage_configs.findAll().then(function(data){
