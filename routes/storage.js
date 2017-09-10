@@ -13,16 +13,17 @@ tour_router.route('/getStorage_records').post(function (req, res) {
     var lmt = req.body.limit
     var value = req.body.v
     var filter = { offset: os, limit: lmt, order: 'createtime DESC' }
-    if (value) {
-        var ud = { $or: [{ pid: { $like: '%' + value.pid + '%' } }] }
-        if (value.type != '') {
-            ud.type = value.type
-        }
-        if (value.desc != '') {
-            ud.desc = value.desc
-        }
-        filter.where = ud
+    var ud = {}
+    if(value.pid != ''){
+        ud.$or =  [{ pid: { $like: '%' + value.pid + '%' } }] 
     }
+    if (value.type != '') {
+        ud.type = value.type
+    }
+    if (value.desc !== '') {
+        ud.desc = value.desc
+    }
+    filter.where = ud
     filter.include = [{model: yxdDB.gravida_storage_configs}]
     yxdDB.gravida_storage_records.findAndCountAll(filter).then(function (data) {
         res.json({ d: data });
@@ -33,8 +34,8 @@ tour_router.route('/getStorages').post(function (req, res) {
     var os = req.body.offset
     var lmt = req.body.limit
     var value = req.body.v
-    var filter = { offset: os, limit: lmt, order: 'createdAt DESC' }
-    if (value) {
+    var filter = { offset: os, limit: lmt, order: 'updatedAt DESC' }
+    if (value.pid!='') {
         var ud = { $or: [{ pid: { $like: '%' + value.pid + '%' } }] }
         filter.where = ud
     }
@@ -92,7 +93,7 @@ tour_router.route('/getGoodsConfig').post(function (req, res) {
     var lmt = req.body.limit
     var _v = req.body.v
     var filter = { offset: os, limit: lmt }
-    if (_v) {
+    if (_v.pid != '') {
         var ud = { $or: [{ pid: { $like: '%' + _v.pid + '%' } }, { name: { $like: '%' + _v.pid + '%' } }] }
         filter.where = ud
     }

@@ -91,8 +91,7 @@ tour_router.route('/getOrders').post(function (req, res) {
     var os = req.body.offset
     var lmt = req.body.limit
     var s = req.body.status
-
-    yxdDB.orders.findAndCountAll({where: { status: s }, offset: os, order: 'createtime DESC', limit: lmt, include: [{ model: yxdDB.products }] }).then(function (data) {
+    yxdDB.orders.findAndCountAll({where: { status: s }, offset: os, order:[['updatetime','DESC'],['createtime','DESC']],limit: lmt, include: [{ model: yxdDB.products }] }).then(function (data) {
         res.json({ d: data });
     })
 
@@ -113,7 +112,7 @@ tour_router.route('/updateOrders').post(function (req, res) {
     var _color = req.body.color
     var _size = req.body.size
     var _pid = req.body.pid
-    var update = { status: st }
+    var update = { status: st,updatetime: Math.floor(Date.now() / 1000)}
     if (st == 3 && req.body.com_no && req.body.exp_order_no) {
         update.exp_com_no = req.body.com_no
         update.exp_no = req.body.exp_order_no
