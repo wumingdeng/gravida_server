@@ -137,57 +137,57 @@ tour_router.route('/delGoodsConfig').post(function (req, res) {
         })
     })
 });
-
-// 获取颜色的配置信息
-tour_router.route('/getColorConfigs').post(function(req,res){
-    var os = req.body.offset
-    var lmt = req.body.limit
-    var _v = req.body.v
-    var filter = { offset: os, limit: lmt }
-    if (_v) {
-        var ud = {}
-        if (_v.color != '') {
-            ud.color = { $like: '%' + _v.color + '%' } 
-            filter.where = ud
-        }
-    }
-    yxdDB.gravida_color_configs.findAndCountAll(filter).then((data) => {
-        res.json({ d: data });
-    })
-});
-
-tour_router.route('/saveColorConfig').post(function (req, res) {
-    var _id = req.body.id
-    var _color = req.body.color
-    var filter = {color:_color}
-    if (_id) {
-        filter.id = _id
-    }
-    util.checkRedisSessionId(req.sessionID, res, function (object) {
-        yxdDB.gravida_color_configs.upsert(filter).then((data) => {
-            mem.f.ReloadMemory('gravida_color_configs',()=>{
-                res.json({ ok: mem.m.gravida_color_configs});
-            })
-        })
-    })
-});
-
-tour_router.route('/delColorConfig').post(function (req, res) {
-    var _id = req.body.id
-    console.log(_id)
-    if (!_id) {
-        res.json({ ok: 0 });
-        return
-    }
-    util.checkRedisSessionId(req.sessionID, res, function (object) {
-        yxdDB.gravida_color_configs.destroy({ where: { id: _id } }).then((data) => {
-            mem.f.ReloadMemory('gravida_color_configs',()=>{
-                res.json({ ok: mem.m.gravida_color_configs});
-            })
-            
-        })
-    })
-});
+//
+// // 获取颜色的配置信息
+// tour_router.route('/getColorConfigs').post(function(req,res){
+//     var os = req.body.offset
+//     var lmt = req.body.limit
+//     var _v = req.body.v
+//     var filter = { offset: os, limit: lmt }
+//     if (_v) {
+//         var ud = {}
+//         if (_v.color != '') {
+//             ud.color = { $like: '%' + _v.color + '%' }
+//             filter.where = ud
+//         }
+//     }
+//     yxdDB.gravida_color_configs.findAndCountAll(filter).then((data) => {
+//         res.json({ d: data });
+//     })
+// });
+//
+// tour_router.route('/saveColorConfig').post(function (req, res) {
+//     var _id = req.body.id
+//     var _color = req.body.color
+//     var filter = {color:_color}
+//     if (_id) {
+//         filter.id = _id
+//     }
+//     util.checkRedisSessionId(req.sessionID, res, function (object) {
+//         yxdDB.gravida_color_configs.upsert(filter).then((data) => {
+//             mem.f.ReloadMemory('gravida_color_configs',()=>{
+//                 res.json({ ok: mem.m.gravida_color_configs});
+//             })
+//         })
+//     })
+// });
+//
+// tour_router.route('/delColorConfig').post(function (req, res) {
+//     var _id = req.body.id
+//     console.log(_id)
+//     if (!_id) {
+//         res.json({ ok: 0 });
+//         return
+//     }
+//     util.checkRedisSessionId(req.sessionID, res, function (object) {
+//         yxdDB.gravida_color_configs.destroy({ where: { id: _id } }).then((data) => {
+//             mem.f.ReloadMemory('gravida_color_configs',()=>{
+//                 res.json({ ok: mem.m.gravida_color_configs});
+//             })
+//
+//         })
+//     })
+// });
 
 // 获取原因的配置信息
 tour_router.route('/getDescConfigs').post(function(req,res){

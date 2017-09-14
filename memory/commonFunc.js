@@ -32,11 +32,6 @@ var mod = {
                 for(var i = 0;i<data2.length;i++){
                     m.gravida_desc_configs[data2[i].id]=data2[i].dataValues
                 }
-                db.gravida_color_configs.findAll().then(function(data3){
-                    for(var i = 0;i<data3.length;i++){
-                        m.gravida_color_configs[data3[i].id]=data3[i].dataValues
-                    }
-                })
             })
         })
     }

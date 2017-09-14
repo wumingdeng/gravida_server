@@ -21,6 +21,7 @@ module.exports = function(sequelize, DataTypes) {
     remark:DataTypes.STRING,
     createtime:DataTypes.BIGINT,
     updatetime:DataTypes.BIGINT,
+    delivertime:DataTypes.BIGINT,
     status:DataTypes.INTEGER,
     reference:DataTypes.STRING,
     exp_no:DataTypes.STRING,

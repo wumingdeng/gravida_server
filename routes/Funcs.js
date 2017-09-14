@@ -91,7 +91,8 @@ tour_router.route('/getOrders').post(function (req, res) {
     var os = req.body.offset
     var lmt = req.body.limit
     var s = req.body.status
-    yxdDB.orders.findAndCountAll({where: { status: s }, offset: os, order:[['updatetime','DESC'],['createtime','DESC']],limit: lmt, include: [{ model: yxdDB.products }] }).then(function (data) {
+    var order = s == 3?'DESC':'ASC'
+    yxdDB.orders.findAndCountAll({where: { status: s }, offset: os, order:[['updatetime',order],['createtime',order]],limit: lmt, include: [{ model: yxdDB.products }] }).then(function (data) {
         res.json({ d: data });
     })
 
@@ -116,6 +117,7 @@ tour_router.route('/updateOrders').post(function (req, res) {
     if (st == 3 && req.body.com_no && req.body.exp_order_no) {
         update.exp_com_no = req.body.com_no
         update.exp_no = req.body.exp_order_no
+        update.delivertime = Math.floor(Date.now() / 1000)
     } else if (st == 3) {
         res.json({ ok: 10 });
         return
@@ -131,10 +133,9 @@ tour_router.route('/updateOrders').post(function (req, res) {
                         }).catch(function (err) {
                             res.json({ error: g.errorCode.WRONG_SQL })
                         })
-                        yxdDB.gravida_storage_configs.create({ pid: _pid, type: 2, desc: 4, amount: _amount, createtime: Math.floor(Date.now() / 1000) }).then((data) => {
-                            console.log(data)
+                        console.log('添加记录')
+                        yxdDB.gravida_storage_records.create({ pid: _pid,color:_color,size:_size, type: 2, desc: 0, amount: -_amount, createtime: Math.floor(Date.now() / 1000) }).then((data) => {
                         })
-                        res.json({ ok: 1 });
                     })
                 } else {
                     res.json({ ok: 11 })

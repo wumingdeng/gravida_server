@@ -5,7 +5,8 @@ module.exports = function(sequelize, DataTypes) {
     name:DataTypes.STRING,
     color:DataTypes.STRING,
     size:DataTypes.INTEGER,
-    color_place:DataTypes.INTEGER
+    barcode:DataTypes.STRING,
+    pictures:DataTypes.STRING,
   },{
     timestamps:false,
     classMethods: {
