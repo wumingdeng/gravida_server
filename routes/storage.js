@@ -254,4 +254,5 @@ tour_router.route('/delDescConfig').post(function (req, res) {
         })
     })
 });
+
 module.exports = tour_router;

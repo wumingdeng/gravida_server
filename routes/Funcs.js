@@ -92,7 +92,7 @@ tour_router.route('/getOrders').post(function (req, res) {
     var lmt = req.body.limit
     var s = req.body.status
     var order = s == 3?'DESC':'ASC'
-    yxdDB.orders.findAndCountAll({where: { status: s }, offset: os, order:[['updatetime',order],['createtime',order]],limit: lmt, include: [{ model: yxdDB.products }] }).then(function (data) {
+    yxdDB.orders.findAndCountAll({where: { status: s }, offset: os, order:[['updatetime',order],['createtime',order]],limit: lmt}).then(function (data) {
         res.json({ d: data });
     })
 
@@ -103,6 +103,21 @@ tour_router.route('/getOrdersCount').get(function (req, res) {
         res.json({ d: data });
     })
 
+});
+
+tour_router.route('/fixExpress').post(function (req, res) {
+    var oid = req.body.id||''
+    var comNo = req.body.com_no || ''
+    var _orderNo = req.body.exp_order_no ||''
+    if(comNo===''||_orderNo===''||oid===''){
+        res.json({error: g.errorCode.WRONG_PARAM })
+        return
+    }
+    yxdDB.orders.update({exp_com_no:comNo,exp_no:_orderNo}, { where: { id: oid } }).then((data) => {
+        res.json({ ok: 1 });
+    }).catch(function (err) {
+        res.json({ error: g.errorCode.WRONG_SQL })
+    })
 });
 
 

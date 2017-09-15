@@ -11,13 +11,16 @@ module.exports = function(sequelize, DataTypes) {
     province:DataTypes.STRING,
     city:DataTypes.STRING,
     area:DataTypes.STRING,
-    shoeid:DataTypes.INTEGER,
+    shoeid:DataTypes.STRING,
+    gid:DataTypes.INTEGER,
+    img:DataTypes.STRING,
     shoeName:DataTypes.STRING,
     size:DataTypes.INTEGER,
     count:DataTypes.INTEGER,
     color:DataTypes.STRING,
     type:DataTypes.STRING,
     price:DataTypes.INTEGER,
+    originalPrice:DataTypes.INTEGER,
     remark:DataTypes.STRING,
     createtime:DataTypes.BIGINT,
     updatetime:DataTypes.BIGINT,
@@ -31,7 +34,7 @@ module.exports = function(sequelize, DataTypes) {
     classMethods: {
       associate: function(models) {
         // associations can be defined here
-         models.orders.hasMany(models.products,{foreignKey:'id',sourceKey:'shoeid'})
+        //  models.orders.hasMany(models.products,{foreignKey:'id',sourceKey:'shoeid'})
       }
     }
   });

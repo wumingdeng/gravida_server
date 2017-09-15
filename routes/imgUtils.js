@@ -41,20 +41,32 @@ function doInit(app){
         var _color = req.body.color.toString()
         var _size = req.body.size.toString()
         var _name = req.body.name || ''
+        var _fileNames = req.body.fileNames
         var filter = { pid: _pid, name: _name, color:_color,size:_size }
-        if (_id) {
+        var isModify = false
+        if (_id) { //没有传id 视为添加行为
             filter.id = _id
+            isModify = true
         }
         var files = req.files
         var fileStr = ''
-        for(var key in files){
-            var file = files[key]
-            //file.path.indexOf('static')+'static'.length+1 固定长度7
-            var name = file.path.substr(7)
-            fileStr += name+','
+        if(isModify && _fileNames){
+            var _fileNameArr = _fileNames.split(",")
+            for(var key in _fileNameArr){
+                var file = _fileNameArr[key]
+                console.log(file)
+                fileStr += file+','
+            }
+            filter.pictures = fileStr.substr(0,fileStr.length-1)
+        }else{
+            for(var key in files){
+                var file = files[key]
+                //file.path.indexOf('static')+'static'.length+1 固定长度7
+                var name = file.path.substr(7)
+                fileStr += name+','
+            }
+            filter.pictures = fileStr.substr(0,fileStr.length-1)
         }
-        filter.pictures = fileStr.substr(0,fileStr.length-1)
-        console.log(filter.pictures)
         util.checkRedisSessionId(req.sessionID, res, function (object) {
             yxdDB.gravida_storage_configs.upsert(filter).then((data)=>{
                 mem.f.ReloadMemory('gravida_storage_configs',()=>{
