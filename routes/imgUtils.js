@@ -47,10 +47,12 @@ function doInit(app){
         if (_id) { //没有传id 视为添加行为
             filter.id = _id
             isModify = true
+            console.log('修改')
         }
         var files = req.files
         var fileStr = ''
-        if(isModify && _fileNames){
+        console.log(_fileNames)
+        if(_fileNames){
             var _fileNameArr = _fileNames.split(",")
             for(var key in _fileNameArr){
                 var file = _fileNameArr[key]

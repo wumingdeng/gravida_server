@@ -7,6 +7,7 @@ var UUID = require('uuid');
 var g = require('../global')
 var yxdDB = require('../models_yxd');
 var mem = require('../memory')
+var fs = require('fs');
 
 tour_router.route('/getStorage_records').post(function (req, res) {
     var os = req.body.offset
@@ -255,4 +256,35 @@ tour_router.route('/delDescConfig').post(function (req, res) {
     })
 });
 
+
+//删除图片
+tour_router.route('/delimgs').post(function (req, res) {
+    var _id = req.body.id
+    var _fileNames = req.body.fileNames
+    util.checkRedisSessionId(req.sessionID, res, function (object) {
+        for(var idx in _fileNames){
+            var file = _fileNames[idx]
+            var fileName = './static/'+file
+            fs.exists(fileName,(exists)=>{
+                if(exists){
+                    fs.unlink(fileName,(err)=>{
+                        if(err){
+                            console.log('文件:'+fileName+'删除失败！');
+                            res.json({ok:0})
+                        }else{
+                            console.log('文件:'+fileName+'删除成功！');
+                            res.json({ok:1})
+                        }
+                    })
+                }else{
+                    console.log("该文件不存在："+fileName)
+                    res.json({ok:1})
+                }
+            })
+        }
+    })
+});
+
 module.exports = tour_router;
+
+
