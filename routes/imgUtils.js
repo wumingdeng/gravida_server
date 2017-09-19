@@ -9,7 +9,8 @@ var util = require('../util/uitl.js')
 // var times = 0 //上传的图片遍历的次数的标识
 var storage2 = multer.diskStorage({
   destination: function (req, file, cb) {
-    var destDir = './static/storage/'+req.body.pid+'/';
+    // var destDir = __dirname+'/../static/storage/'+req.body.pid+'/';
+    var destDir = __dirname+'/../static/storage/'+req.body.pid+'/';
      // 判断文件夹是否存在
     fs.stat(destDir, (err)=> {
         if (err) {
@@ -32,6 +33,31 @@ var storage2 = multer.diskStorage({
 })
 var upload2 = multer({ storage: storage2})
 
+var storage = multer.diskStorage({
+    destination: function (req, file, cb) {
+        // var destDir = __dirname+'/../static/storage/'+req.body.pid+'/';
+        var destDir = __dirname+'/../static/produce/'+req.body.id+'/';
+        // 判断文件夹是否存在
+        fs.stat(destDir, (err)=> {
+            if (err) {
+                // 创建文件夹
+                mkdirp(destDir, (err)=>{
+                    if (err) {
+                        cb(err);
+                    } else {
+                        cb(null, destDir);
+                    }
+                });
+            } else {
+                cb(null, destDir);
+            }
+        });
+    },
+    filename: function (req, file, cb) {
+        cb(null, file.originalname)
+    }
+})
+var upload = multer({ storage: storage})
 
 function doInit(app){
     // 带图片提交货号配置
@@ -53,6 +79,50 @@ function doInit(app){
         var fileStr = ''
         console.log(_fileNames)
         if(_fileNames){
+            var _fileNameArr = _fileNames.split(",")
+            for(var key in _fileNameArr){
+                var file = _fileNameArr[key]
+                console.log(file)
+                fileStr += file+','
+            }
+            filter.pictures = fileStr.substr(0,fileStr.length-1)
+        }else{
+            for(var key in files){
+                var file = files[key]
+                //file.path.indexOf('static')+'static'.length+1 固定长度7
+                var name = file.path.substr(7)
+                fileStr += name+','
+            }
+            filter.pictures = fileStr.substr(0,fileStr.length-1)
+        }
+        util.checkRedisSessionId(req.sessionID, res, function (object) {
+            yxdDB.gravida_storage_configs.upsert(filter).then((data)=>{
+                mem.f.ReloadMemory('gravida_storage_configs',()=>{
+                    res.json({ok: mem.m.gravida_storage_configs});
+                })
+            })
+        })
+    });
+
+    // 带图片提交货号配置
+    app.post('/saveProduceConfig',upload.array('cps'),function(req,res,next){
+        var _id = req.body.id
+        var _intro = req.body.intro
+        var _showPrice = req.body.showPrice
+        var _introNum = req.body.introNum
+        var _showType = req.body.showType
+        var _name = req.body.name || ''
+        var _fileNames = req.body.fileNames
+        var filter = { intro: _intro, name: _name, showPrice:_showPrice,introNum:_introNum,showType:_showType}
+        var isModify = false
+        if (_id) { //没有传id 视为添加行为
+            filter.id = _id
+            isModify = true
+            console.log('修改')
+        }
+        var files = req.files
+        var fileStr = ''
+        if(isModify){
             var _fileNameArr = _fileNames.split(",")
             for(var key in _fileNameArr){
                 var file = _fileNameArr[key]

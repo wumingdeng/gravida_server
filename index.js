@@ -52,6 +52,7 @@ app.use(bodyParser.json());
 app.use(bodyParser.urlencoded({ extended: false }));
 
 // init routes// static pages if needed
+console.log("__dir path:"+__dirname)
 app.use(express.static(path.join(__dirname, 'static')));
 //app.get('/',function(req,res){
 //    res.write("<html><h1>svn</h1></html>");

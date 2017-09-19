@@ -5,6 +5,10 @@ module.exports = function(sequelize, DataTypes) {
     name:DataTypes.STRING,
     intro: DataTypes.STRING,
     smallPic:DataTypes.STRING,
+    swipePic:DataTypes.STRING,
+    goods:DataTypes.STRING,
+    showType:DataTypes.STRING,
+    showPrice:DataTypes.INTEGER,
     introNum: DataTypes.INTEGER,
   },{
     timestamps:false,

@@ -125,16 +125,31 @@ tour_router.route('/saveGoodsConfig').post(function (req, res) {
 
 tour_router.route('/delGoodsConfig').post(function (req, res) {
     var _id = req.body.id
-    console.log(_id)
+    var _pid = req.body.pid
     if (!_id) {
         res.json({ ok: 0 });
         return
     }
     util.checkRedisSessionId(req.sessionID, res, function (object) {
-        yxdDB.gravida_storage_configs.destroy({ where: { id: _id } }).then((data) => {
-            mem.f.ReloadMemory('gravida_storage_configs',()=>{
-                res.json({ok: mem.m.gravida_storage_configs});
-            })
+        yxdDB.gravida_product_storages.findOne({where:{pid:_pid}}).then((produce)=>{
+            if(produce){
+                console.log('存在')
+                res.json({ok: g.errorCode.WRONG_EXIST});
+            }else{
+                yxdDB.gravida_storage_records.findOne({where:{pid:_pid}}).then((record)=>{
+                    if(record){
+                        console.log('存在')
+                        res.json({ok: g.errorCode.WRONG_EXIST});
+                    }else{
+                        console.log('不存在')
+                        yxdDB.gravida_storage_configs.destroy({ where: { id: _id } }).then((data) => {
+                            mem.f.ReloadMemory('gravida_storage_configs',()=>{
+                                res.json({ok: mem.m.gravida_storage_configs});
+                            })
+                        })
+                    }
+                })
+            }
         })
     })
 });
@@ -284,6 +299,22 @@ tour_router.route('/delimgs').post(function (req, res) {
         }
     })
 });
+
+tour_router.route('/getProduceConfigs').post((req,res)=>{
+    var os = req.body.offset
+    var lmt = req.body.limit
+    var _v = req.body.v
+    var filter = { offset: os, limit: lmt }
+    var ud = {}
+    if (_v.name != '') {
+        ud.name = { $like: '%' + _v.name + '%' }
+        filter.where = ud
+    }
+    yxdDB.products.findAndCountAll(filter).then((data) => {
+        res.json({ d: data });
+    })
+})
+
 
 module.exports = tour_router;
 

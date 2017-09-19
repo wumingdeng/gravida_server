@@ -92,7 +92,20 @@ tour_router.route('/getOrders').post(function (req, res) {
     var lmt = req.body.limit
     var s = req.body.status
     var order = s == 3?'DESC':'ASC'
-    yxdDB.orders.findAndCountAll({where: { status: s }, offset: os, order:[['updatetime',order],['createtime',order]],limit: lmt}).then(function (data) {
+    var ud = {where: { status: s }, offset: os, order:[['updatetime',order],['createtime',order]],limit: lmt}
+    if(s==4){
+        ud.where = {$or:[{status:8},{status:4}]}
+    }else if(s==5){
+        yxdDB.orders.count({where:{status:s}}).then(function (data) {
+            console.log(data)
+            var query = `select * from orders os join userComments uc ON os.id=uc.orderid and os.status=5 order by uc.time desc limit ? offset ?`
+            yxdDB.sequelize.query(query, { replacements: [lmt,os],type: yxdDB.sequelize.QueryTypes.SELECT }).then(function(records){
+                res.json({ d: records,count: data});
+            })
+        })
+        return
+    }
+    yxdDB.orders.findAndCountAll(ud).then(function (data) {
         res.json({ d: data });
     })
 
@@ -171,8 +184,25 @@ tour_router.route('/getOrdersBylike').post(function (req, res) {
     var lmt = req.body.limit
     var value = req.body.v
     var status = req.body.status
+    var _where = {}
     var ud = [{ tel: { $like: '%' + value + '%' } }, { contact: { $like: '%' + value + '%' } }, { id: { $like: '%' + value + '%' } }]
-    yxdDB.orders.findAndCountAll({ where: { $or: ud, $and: { status: status } }, offset: os, limit: lmt ,include: [{ model: yxdDB.products }]}).then(function (data) {
+    _where.$or = ud
+    if(status==4){
+        ud.push({status:8})
+        ud.push({status:4})
+    }else if(status==5){
+        yxdDB.orders.count({where:{$or:ud,status:status}}).then(function (data) {
+            console.log(data)
+            var query = `select * from orders os join userComments uc ON os.id=uc.orderid and os.status=5 and (os.tel like :tel or os.contact like :contact or os.id like :id) order by uc.time desc limit :lmt offset :os`
+            yxdDB.sequelize.query(query, { replacements: {tel:'%' + value + '%',contact:'%' + value + '%',id:'%' + value + '%',lmt:lmt,os:os},type: yxdDB.sequelize.QueryTypes.SELECT }).then(function(records){
+                res.json({ d: records,count: data});
+            })
+        })
+        return
+    }else{
+        _where.$and = { status: status }
+    }
+    yxdDB.orders.findAndCountAll({ where: _where, offset: os, limit: lmt ,include: [{ model: yxdDB.products }]}).then(function (data) {
         res.json({ d: data });
     })
 });
