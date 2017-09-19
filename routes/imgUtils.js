@@ -4,6 +4,7 @@ var fs = require('fs');
 var yxdDB = require('../models_yxd');
 var mem = require('../memory')
 var util = require('../util/uitl.js')
+var UUID = require('uuid');
 
 // var colors = []
 // var times = 0 //上传的图片遍历的次数的标识
@@ -28,15 +29,17 @@ var storage2 = multer.diskStorage({
     });
   },
   filename: function (req, file, cb) {
-    cb(null, file.originalname)
+    var name = file.originalname.substr(file.originalname.lastIndexOf('.'),file.originalname.length)
+    var uuid= UUID.v1()
+    cb(null,uuid+name)
   }
 })
 var upload2 = multer({ storage: storage2})
 
 var storage = multer.diskStorage({
     destination: function (req, file, cb) {
-        // var destDir = __dirname+'/../static/storage/'+req.body.pid+'/';
-        var destDir = __dirname+'/../static/produce/'+req.body.id+'/';
+        // var destDir = __dirname+'/../static/storage/'+req.body.id+'/';
+        var destDir = __dirname+'/../static/produce/swiper/';
         // 判断文件夹是否存在
         fs.stat(destDir, (err)=> {
             if (err) {
@@ -54,7 +57,9 @@ var storage = multer.diskStorage({
         });
     },
     filename: function (req, file, cb) {
-        cb(null, file.originalname)
+        var name = file.originalname.substr(file.originalname.lastIndexOf('.'),file.originalname.length)
+        var uuid= UUID.v1()
+        cb(null, uuid+name)
     }
 })
 var upload = multer({ storage: storage})
@@ -112,8 +117,8 @@ function doInit(app){
         var _introNum = req.body.introNum
         var _showType = req.body.showType
         var _name = req.body.name || ''
-        var _fileNames = req.body.fileNames
-        var filter = { intro: _intro, name: _name, showPrice:_showPrice,introNum:_introNum,showType:_showType}
+        var _goods = req.body.goods
+        var filter = { intro: _intro, name: _name, showPrice:_showPrice,introNum:_introNum,showType:_showType,goods:_goods}
         var isModify = false
         if (_id) { //没有传id 视为添加行为
             filter.id = _id
@@ -126,24 +131,23 @@ function doInit(app){
             var _fileNameArr = _fileNames.split(",")
             for(var key in _fileNameArr){
                 var file = _fileNameArr[key]
-                console.log(file)
                 fileStr += file+','
             }
             filter.pictures = fileStr.substr(0,fileStr.length-1)
         }else{
-            for(var key in files){
-                var file = files[key]
-                //file.path.indexOf('static')+'static'.length+1 固定长度7
+            var homeimg = files[0]
+            filter.smallPic = homeimg.path.substr(7)
+            console.log("files.length:"+files.length)
+            for(var i =1;i<files.length;i++){
+                var file = files[i]
                 var name = file.path.substr(7)
                 fileStr += name+','
             }
-            filter.pictures = fileStr.substr(0,fileStr.length-1)
+            filter.swipePic = fileStr.substr(0,fileStr.length-1)
         }
         util.checkRedisSessionId(req.sessionID, res, function (object) {
-            yxdDB.gravida_storage_configs.upsert(filter).then((data)=>{
-                mem.f.ReloadMemory('gravida_storage_configs',()=>{
-                    res.json({ok: mem.m.gravida_storage_configs});
-                })
+            yxdDB.products.upsert(filter).then((data)=>{
+                res.json({ok:1});
             })
         })
     });
