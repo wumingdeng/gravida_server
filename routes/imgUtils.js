@@ -29,9 +29,9 @@ var storage2 = multer.diskStorage({
     });
   },
   filename: function (req, file, cb) {
-    var name = file.originalname.substr(file.originalname.lastIndexOf('.'),file.originalname.length)
-    var uuid= UUID.v1()
-    cb(null,uuid+name)
+    // var name = file.originalname.substr(file.originalname.lastIndexOf('.'),file.originalname.length)
+    // var uuid= UUID.v1()
+    cb(null,file.originalname)
   }
 })
 var upload2 = multer({ storage: storage2})
@@ -94,8 +94,8 @@ function doInit(app){
         }else{
             for(var key in files){
                 var file = files[key]
-                //file.path.indexOf('static')+'static'.length+1 固定长度7
-                var name = file.path.substr(7)
+                var place =  file.path.indexOf('static')+'static'.length+1
+                var name = file.path.substr(place)
                 fileStr += name+','
             }
             filter.pictures = fileStr.substr(0,fileStr.length-1)
@@ -114,33 +114,82 @@ function doInit(app){
         var _id = req.body.id
         var _intro = req.body.intro
         var _showPrice = req.body.showPrice
+        var _swipePic = req.body.swipePic
+        var _smallPic = req.body.smallPic
         var _introNum = req.body.introNum
         var _showType = req.body.showType
         var _name = req.body.name || ''
         var _goods = req.body.goods
+        var _del = req.body.del
+        var _hashome = req.body.hasHome
         var filter = { intro: _intro, name: _name, showPrice:_showPrice,introNum:_introNum,showType:_showType,goods:_goods}
         var isModify = false
+        var _swipePicArr = [] //更新后的轮播图片的字符串数组
         if (_id) { //没有传id 视为添加行为
             filter.id = _id
             isModify = true
             console.log('修改')
         }
-        var files = req.files
-        var fileStr = ''
-        if(isModify){
-            var _fileNameArr = _fileNames.split(",")
-            for(var key in _fileNameArr){
-                var file = _fileNameArr[key]
-                fileStr += file+','
+        var fileStr = '' //轮播的字符串
+        if(_del){
+            var _delArr = _del.split(',')
+            console.log('是删除求情...')
+            _swipePicArr = _swipePic.split(',')
+            for(var k in _delArr){
+                var url = _delArr[k]
+                var startIdx = url.indexOf('produce/swiper')
+                var fileName = url.substr(startIdx,url.length)
+                var delpp = _swipePicArr.indexOf(fileName) //是删除图片的位置
+                if(delpp>=0){
+                    _swipePicArr.splice(delpp,1)
+                }
+                fileName = './static/'+fileName
+                util.deletefile(fileName)
             }
-            filter.pictures = fileStr.substr(0,fileStr.length-1)
+            fileStr = _swipePicArr.toString()
+        }else if(_swipePic){
+            fileStr = _swipePic
+        }
+        if(_hashome) {
+            var startIdx = _smallPic.indexOf('produce/swiper')
+            var _smallPic = _smallPic.substr(startIdx,_smallPic.length)
+            _smallPic = './static/'+_smallPic
+            console.log('替换首页图片...:'+_smallPic)
+            util.deletefile(_smallPic)
+        }
+        var files = req.files
+        var isAddImg = false //是是否有添加或者替换新的轮播图片
+        if(isModify){
+            if(files){
+                var i = 0
+                if(_hashome){ //是否有更新首页图片
+                    var homeimg = files[i]
+                    var place =  homeimg.path.indexOf('static')+'static'.length+1
+                    filter.smallPic = homeimg.path.substr(place,homeimg.path.length)
+                    console.log(filter.smallPic)
+                    i++
+                }
+                for(;i<files.length;i++){
+                    isAddImg = true
+                    var file = files[i]
+                    var place =  file.path.indexOf('static')+'static'.length+1
+                    var name = file.path.substr(place,file.path.length)
+                    fileStr += name+','
+                }
+            }
+            if(isAddImg){
+                filter.swipePic = fileStr.substr(0,fileStr.length-1)
+            }else{
+                filter.swipePic = fileStr
+            }
         }else{
             var homeimg = files[0]
-            filter.smallPic = homeimg.path.substr(7)
-            console.log("files.length:"+files.length)
+            var place =  homeimg.path.indexOf('static')+'static'.length+1
+            filter.smallPic = homeimg.path.substr(place,homeimg.path.length)
             for(var i =1;i<files.length;i++){
                 var file = files[i]
-                var name = file.path.substr(7)
+                var place =  file.path.indexOf('static')+'static'.length+1
+                var name = file.path.substr(place,file.path.length)
                 fileStr += name+','
             }
             filter.swipePic = fileStr.substr(0,fileStr.length-1)

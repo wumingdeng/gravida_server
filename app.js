@@ -33,7 +33,25 @@ pm2.connect(function(err) {
     script    : 'index.js',       // Script to be run
     exec_mode : 'cluster',        // Allow your app to be clustered
     instances : numCPUs,          // Optional: Scale your app by 4
-    max_memory_restart : '700M'   // Optional: Restart your app if it reaches 100Mo
+    max_memory_restart : '700M',  // Optional: Restart your app if it reaches 100Mo
+    watch: [  // 监控变化的目录，一旦变化，自动重启
+      "models",
+      "models_yxd",
+      "global",
+      "routes"
+    ],
+    ignore_watch : [  // 从监控目录中排除
+      "node_modules",
+      "logs",
+      "static"
+    ],
+    error_file    : "./err.log",
+    out_file  : "./out.log",
+    error: "./err.log",
+    output: "./out.log",
+    pid   : "/Users/Fizzo/logs/child.pid",
+    mergeLogs      : true,
+    logDateFormat : "YYYY-MM-DD HH:mm"
   }, function(err, apps) {
     pm2.disconnect();   // Disconnect from PM2
     if (err) throw err

@@ -1,0 +1,19 @@
+{
+  "apps": [
+    {
+      "name": "d",
+      "script": "./index.js",
+      "instances": "max",
+      "exec_mode": "cluster",
+      "max_memory_restart" : "700M",
+      "error_file"    : "./err.log",
+      "out_file"  : "./out.log",
+      "mergeLogs"     : true,
+      "logDateFormat" : "YYYY-MM-DD HH:mm",
+      "env": {
+        "NODE_ENV": "production",
+        "PORT": "3000"
+      }
+    }
+  ]
+}

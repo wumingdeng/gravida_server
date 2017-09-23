@@ -8,5 +8,10 @@
     "poolsize":5,
     "listen":8101,
     "ws":0,
-    "native":1
+    "native":1,
+
+    "phoneSer_Addr":"121.40.254.174",
+    "phoneSer_port":"8092",
+    "yxd_addr":"180yxd.sujudao.com",
+    "yxd_port":"8097"
 }

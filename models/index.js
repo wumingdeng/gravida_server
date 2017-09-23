@@ -5,8 +5,8 @@ var basename  = path.basename(module.filename);
 var env       = process.env.NODE_ENV || 'development';
 var db        = {};
 
-var g = require('../global')
-var config = g.cfg
+// var g = require('../global')
+var config = require('../config.json')
 // database initialize
 var sequelize = new Sequelize(config.dbname, config.user, config.pass, {
   host: config.dbaddr,
@@ -17,7 +17,7 @@ var sequelize = new Sequelize(config.dbname, config.user, config.pass, {
     min: 0,
     idle: 10000
   },
-  logging: config.sqldebug
+  logging: false
 });
 
 // schema miration

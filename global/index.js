@@ -1,4 +1,5 @@
-var config = require('../config.json')
+// var config = require('../config_139_224_164_169.json')
+var config = require('../config_121.json')
 module.exports = {
     errorCode:{
         WRONG_SESSION_ERROR:-2, //session 异常

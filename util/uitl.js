@@ -6,6 +6,7 @@ var uitl = {}
 var redis = require("redis")
 var http = require("http");
 var g = require('../global')
+var fs = require('fs');
 var config = g.cfg
 
 if (config.native == 1) {
@@ -77,6 +78,22 @@ uitl.accessOutUrl = function (host, port, method, path, data, sf, ef) {
         _req.write(data + "\n");
     }
     _req.end();
+}
+
+uitl.deletefile = function(fileName){
+    fs.exists(fileName,(exists)=>{
+        if(exists){
+            fs.unlink(fileName,(err)=>{
+                if(err){
+                    console.log('文件:'+fileName+'删除失败！');
+                }else{
+                    console.log('文件:'+fileName+'删除成功！');
+                }
+            })
+        }else{
+            console.log("该文件不存在："+fileName)
+        }
+    })
 }
 
 module.exports = uitl

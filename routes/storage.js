@@ -315,6 +315,37 @@ tour_router.route('/getProduceConfigs').post((req,res)=>{
     })
 })
 
+tour_router.route('/delProduce').post((req,res)=>{
+    var _id = req.body.id
+    var _smallPic = req.body.smallPic
+    var _swipePic = req.body.swipePic
+    util.checkRedisSessionId(req.sessionID, res, function (object) {
+        yxdDB.products.destroy({where:{id:_id}}).then((data) => {
+            util.deletefile('./static/'+_smallPic)
+            var swipArr = _swipePic.split(',')
+            for(var k in swipArr){
+                var swipe = swipArr[k]
+                swipe = './static/'+swipe
+                util.deletefile(swipe)
+            }
+            res.json({ ok: 1});
+        })
+    })
+})
+
+tour_router.route('/freshConfig').get((req,res)=>{
+    util.checkRedisSessionId(req.sessionID, res, function (object) {
+        console.log('push_config')
+        util.accessOutUrl(g.cfg.goodsSer_addr, g.cfg.goodsSer_port, 'GET', '/api/freshConfig', null, function (body) {
+            console.log('push success')
+            res.json({ ok: 1 });
+        }, function (err) {
+            res.json({ error: err });
+        })
+    })
+})
+
+
 
 module.exports = tour_router;
 

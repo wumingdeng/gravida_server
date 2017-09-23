@@ -80,7 +80,7 @@ tour_router.route('/getVisits').post(function (req, respone) {
     var p = req.body.p
     var s = req.body.s
     var did = req.body.did
-    util.accessOutUrl(g.interface.addr, g.interface.port, 'POST', '/api/get_doctor_reportlist', { p: p, s: 0, did: did }, function (body) {
+    util.accessOutUrl(g.cfg.yxd_addr, g.cfg.yxd_port, 'POST', '/api/get_doctor_reportlist', { p: p, s: 0, did: did }, function (body) {
         respone.json(body);
     }, function (err) {
         respone.json({ error: err });
@@ -240,7 +240,7 @@ tour_router.route('/getVisitsBylike').post(function (req, res) {
 tour_router.route('/getUserReport').post(function (req, res) {
     var no = req.body.rid
     var openid = req.body.openid
-    util.accessOutUrl(g.interface.addr, g.interface.port, 'POST', '/api/get_user_reportlist', { rid: no, openid: openid }, function (body) {
+    util.accessOutUrl(g.cfg.yxd_addr, g.cfg.yxd_port, 'POST', '/api/get_user_reportlist', { rid: no, openid: openid }, function (body) {
         res.json(body);
     }, function (err) {
         res.json({ error: err });
@@ -252,7 +252,7 @@ tour_router.route('/getUserReport').post(function (req, res) {
 tour_router.route('/getReportByNo').post(function (req, res) {
     var no = req.body.rid
     var openid = req.body.openid
-    util.accessOutUrl(g.interface.addr, g.interface.port, 'POST', '/api/getreport', { rid: no, openid: openid }, function (body) {
+    util.accessOutUrl(g.cfg.yxd_addr, g.cfg.yxd_port, 'POST', '/api/getreport', { rid: no, openid: openid }, function (body) {
         res.json(body);
     }, function (err) {
         res.json({ error: err });
@@ -576,7 +576,7 @@ tour_router.route('/del_config').post(function (req, res) {
 tour_router.route('/push_config').get(function (req, res) {
     util.checkRedisSessionId(req.sessionID, res, function (object) {
         console.log('push_config')
-        util.accessOutUrl(g.interface.phoneSer_Addr, g.interface.phoneSer_port, 'GET', '/api/freshConfig', null, function (body) {
+        util.accessOutUrl(g.cfg.phoneSer_Addr, g.cfg.phoneSer_port, 'GET', '/api/freshConfig', null, function (body) {
             console.log('push success')
             res.json({ ok: 1 });
         }, function (err) {
