@@ -8,7 +8,6 @@ module.exports = {
         WRONG_PARAM:102, //错误参数
         WRONG_USER_EXIST:103,//用户名已存在
         WRONG_WEIGHT:104, //权限不足
-        WRONG_WEIGHT:105, //权限不足
         WRONG_EXIST:106, //记录存在
     },
     interface:{

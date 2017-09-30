@@ -11,70 +11,6 @@ var fs = require('fs');
 var g = require('../global')
 var yxdDB = require('../models_yxd');
 
-tour_router.route('/getAdmins').post(function (req, res) {
-    var os = req.body.offset
-    var lmt = req.body.limit
-    var h_no = req.body.h_no || '1'
-    var filter = {}
-    filter.hospital_no = h_no
-    db.admins.findAndCountAll({ where: filter, offset: os, limit: lmt }).then(function (data) {
-        res.json({ d: data });
-    })
-});
-
-tour_router.route('/getAdminByName').post(function (req, res) {
-    var v = req.body.v
-    var os = req.body.offset
-    var lmt = req.body.limit
-    var h_no = req.body.h_no || '1'
-    var filter = { familyname: { $like: '%' + v + '%' } }
-    filter.hospital_no = h_no
-    db.admins.findAndCountAll({ where: filter, offset: os, limit: lmt }).then(function (data) {
-        res.json({ d: data });
-    })
-});
-
-tour_router.route('/saveAdmin').post(function (req, res) {
-    var id = req.body.id
-    var un = req.body.username
-    var pw = req.body.password
-    var fn = req.body.familyname
-    var weight = req.body.weight.toString()
-    var h_no = req.body.h_no || '1'
-    var uData = {}
-    if (id) {
-        uData = { id: id, username: un, password: pw, familyname: fn, weight: weight }
-    } else {
-        uData = { username: un, password: pw, familyname: fn, weight: weight }
-    }
-    uData.hospital_no = h_no
-    util.checkRedisSessionId(req.sessionID, res, function (object) {
-        db.admins.findOne({ where: { username: un } }).then((data) => {
-            console.log(data)
-            if (data && !id) {
-                res.json({ ok: g.errorCode.WRONG_USER_EXIST });
-            } else {
-                db.admins.upsert(uData).then(function (data) {
-                    res.json({ ok: 1, d: data });
-                })
-            }
-        })
-    })
-});
-
-tour_router.route('/delAdmin').post(function (req, res) {
-    var id = req.body.id;
-    util.checkRedisSessionId(req.sessionID, res, function (object) {
-        db.admins.destroy({ where: { id: id } }).then(function (data) {
-            res.json({ ok: 1, d: data });
-        }).catch(function (err) {
-            res.json({ error: g.errorCode.WRONG_SQL })
-        })
-    })
-});
-
-
-
 //获取医生报告
 tour_router.route('/getVisits').post(function (req, respone) {
     var p = req.body.p
@@ -92,30 +28,62 @@ tour_router.route('/getOrders').post(function (req, res) {
     var lmt = req.body.limit
     var s = req.body.status
     var order = s == 3?'DESC':'ASC'
-    var ud = {where: { status: s }, offset: os, order:[['updatetime',order],['createtime',order]],limit: lmt}
-    if(s==4){
-        ud.where = {$or:[{status:8},{status:4}]}
-    }else if(s==5){
-        yxdDB.orders.count({where:{status:s}}).then(function (data) {
-            console.log(data)
+    var ud = {offset: os, order:[['updatetime',order],['createtime',order]],limit: lmt}
+    util.checkRedisSessionId(req.sessionID, res, function (object) {
+        if(s==4){
+            if (object.weight.indexOf('105') < 0) {
+                res.json({ok: g.errorCode.WRONG_WEIGHT});
+                return
+            }
+            ud.where = {$or:[{status:8},{status:4}]}
+        }else if(s==5){
+            var shup = {where:{status:s}}
             var query = `select * from orders os join userComments uc ON os.id=uc.orderid and os.status=5 order by uc.time desc limit ? offset ?`
-            yxdDB.sequelize.query(query, { replacements: [lmt,os],type: yxdDB.sequelize.QueryTypes.SELECT }).then(function(records){
-                res.json({ d: records,count: data});
+            var argArr = [lmt,os]
+            if (object.weight.indexOf('106') < 0) {
+                res.json({ok: g.errorCode.WRONG_WEIGHT});
+                return
+            }
+            if(object.platform){
+                shup.where['platform'] = object.platform
+                argArr = [object.platform,lmt,os]
+                query = `select * from orders os join userComments uc ON os.id=uc.orderid and os.status=5 and os.platform=? order by uc.time desc limit ? offset ?`
+            }
+            yxdDB.orders.count(shup).then(function (data) {
+                yxdDB.sequelize.query(query, { replacements: argArr,type: yxdDB.sequelize.QueryTypes.SELECT }).then(function(records){
+                    res.json({ d: records,count: data});
+                })
             })
+            return
+        }else if(s==-1){
+            if (object.weight.indexOf('107') < 0) {
+                res.json({ok: g.errorCode.WRONG_WEIGHT});
+                return
+            }
+        }else{
+            ud.where={ status: s }
+        }
+        console.log(object.platform)
+        if(object.platform){
+            if(!ud.where) ud.where = {}
+            ud.where['platform'] = object.platform
+        }
+        yxdDB.orders.findAndCountAll(ud).then(function (data) {
+            res.json({ d: data });
         })
-        return
-    }
-    yxdDB.orders.findAndCountAll(ud).then(function (data) {
-        res.json({ d: data });
     })
-
 });
 
 tour_router.route('/getOrdersCount').get(function (req, res) {
-    yxdDB.orders.findAndCountAll({attributes:['status'], group:'status'}).then(function (data) {
-        res.json({ d: data });
+    util.checkRedisSessionId(req.sessionID, res, function (object) {
+        var ud = {attributes: ['status'], group: 'status'}
+        if (object.platform) {
+            ud.where = {platform: object.platform}
+        }
+        yxdDB.orders.findAndCountAll(ud).then(function (data) {
+            res.json({d: data});
+        })
     })
-
 });
 
 tour_router.route('/fixExpress').post(function (req, res) {
@@ -126,13 +94,22 @@ tour_router.route('/fixExpress').post(function (req, res) {
         res.json({error: g.errorCode.WRONG_PARAM })
         return
     }
-    yxdDB.orders.update({exp_com_no:comNo,exp_no:_orderNo}, { where: { id: oid } }).then((data) => {
-        res.json({ ok: 1 });
-    }).catch(function (err) {
-        res.json({ error: g.errorCode.WRONG_SQL })
+    util.checkRedisSessionId(req.sessionID, res, function (object) {
+        if (object.weight.indexOf('104') < 0) {
+            res.json({ok: g.errorCode.WRONG_WEIGHT});
+            return
+        }
+        yxdDB.orders.update({exp_com_no: comNo, exp_no: _orderNo}, {where: {id: oid}}).then((data) => {
+            if(data){
+                res.json({ok: 1});
+            }else{
+                res.json({error: g.errorCode.WRONG_SQL})
+            }
+        }).catch(function (err) {
+            res.json({error: g.errorCode.WRONG_SQL})
+        })
     })
 });
-
 
 tour_router.route('/updateOrders').post(function (req, res) {
     var oid = req.body.id
@@ -151,13 +128,29 @@ tour_router.route('/updateOrders').post(function (req, res) {
         return
     }
     util.checkRedisSessionId(req.sessionID, res, function (object) {
+        if(st == 1 && object.weight.indexOf('102')<0){
+            res.json({ ok: g.errorCode.WRONG_WEIGHT});
+            return
+        }
+        if(st == 2 && object.weight.indexOf('103')<0){
+            res.json({ ok: g.errorCode.WRONG_WEIGHT});
+            return
+        }
+        if(st == 3 && object.weight.indexOf('104')<0){
+            res.json({ ok: g.errorCode.WRONG_WEIGHT});
+            return
+        }
         if(st == 3){
             yxdDB.gravida_product_storages.findOne({ where: { color: _color, pid: _pid, size: _size } }).then((data) => {
                 if (data && data.amount >= _amount) {
                     //出库的行为
                     data.decrement('amount', { by: _amount }).then(function (d) {
                         yxdDB.orders.update(update, { where: { id: oid } }).then((data) => {
-                            res.json({ ok: 1 });
+                            if(data){
+                                res.json({ ok: 1 });
+                            }else{
+                                res.json({ error: g.errorCode.WRONG_SQL })
+                            }
                         }).catch(function (err) {
                             res.json({ error: g.errorCode.WRONG_SQL })
                         })
@@ -187,23 +180,39 @@ tour_router.route('/getOrdersBylike').post(function (req, res) {
     var _where = {}
     var ud = [{ tel: { $like: '%' + value + '%' } }, { contact: { $like: '%' + value + '%' } }, { id: { $like: '%' + value + '%' } }]
     _where.$or = ud
-    if(status==4){
-        ud.push({status:8})
-        ud.push({status:4})
-    }else if(status==5){
-        yxdDB.orders.count({where:{$or:ud,status:status}}).then(function (data) {
-            console.log(data)
-            var query = `select * from orders os join userComments uc ON os.id=uc.orderid and os.status=5 and (os.tel like :tel or os.contact like :contact or os.id like :id) order by uc.time desc limit :lmt offset :os`
-            yxdDB.sequelize.query(query, { replacements: {tel:'%' + value + '%',contact:'%' + value + '%',id:'%' + value + '%',lmt:lmt,os:os},type: yxdDB.sequelize.QueryTypes.SELECT }).then(function(records){
-                res.json({ d: records,count: data});
+    util.checkRedisSessionId(req.sessionID, res, function (object) {
+        if(status==4){
+            ud.push({status:8})
+            ud.push({status:4})
+            if (object.platform) {
+                _where.$and = {platform:object.platform}
+            }
+        }else if(status==5) {
+            yxdDB.orders.count({where: {$or: ud, status: status}}).then(function (data) {
+                console.log(data)
+                var query = `select * from orders os join userComments uc ON os.id=uc.orderid and os.status=5 and (os.tel like :tel or os.contact like :contact or os.id like :id) order by uc.time desc limit :lmt offset :os`
+                yxdDB.sequelize.query(query, {
+                    replacements: {
+                        tel: '%' + value + '%',
+                        contact: '%' + value + '%',
+                        id: '%' + value + '%',
+                        lmt: lmt,
+                        os: os
+                    }, type: yxdDB.sequelize.QueryTypes.SELECT
+                }).then(function (records) {
+                    res.json({d: records, count: data});
+                })
             })
+            return
+        }else if(status != -1){
+            _where.$and = { status: status }
+            if (object.platform) {
+                _where.$and['platform'] = object.platform
+            }
+        }
+        yxdDB.orders.findAndCountAll({ where: _where, offset: os, limit: lmt ,include: [{ model: yxdDB.products }]}).then(function (data) {
+            res.json({ d: data });
         })
-        return
-    }else{
-        _where.$and = { status: status }
-    }
-    yxdDB.orders.findAndCountAll({ where: _where, offset: os, limit: lmt ,include: [{ model: yxdDB.products }]}).then(function (data) {
-        res.json({ d: data });
     })
 });
 
@@ -265,34 +274,6 @@ tour_router.route('/getTodo').get(function (req, res) {
     })
 });
 
-tour_router.route('/login').post(function (req, res) {
-    var un = req.body.username
-    var pw = req.body.password
-    var h_no = req.body.h_no || '1'
-    var filterCol = { username: un, password: pw, hospital_no: h_no }
-    db.admins.findOne({ where: filterCol }).then((data) => {
-        if (data) {
-            if (req.session) {
-                req.session.username = un
-                req.session.weight = data.dataValues.weight
-                req.session.login = true
-                req.session.h_no = h_no
-            }
-            res.json({ ok: 1, d: data.dataValues });
-        } else {
-            res.json({ ok: 0 })
-        }
-    })
-});
-
-tour_router.route('/signOut').get(function (req, res) {
-    console.log("signOut")
-    util.checkRedisSessionId(req.sessionID, res, function (object) {
-        util.clearSession(req)
-    })
-    res.json({ ok: 1 })
-});
-
 tour_router.route('/getHospitalsByName').post(function (req, res) {
     var v = req.body.v
     var os = req.body.offset
@@ -314,7 +295,7 @@ tour_router.route('/updateHospitalStatue').post(function (req, res) {
     var id = req.body.id
     var st = req.body.st
     util.checkRedisSessionId(req.sessionID, res, function (object) {
-        if (object.weight.indexOf('2') < 0) {
+        if (object.weight.indexOf('3') < 0) {
             res.json({ ok: g.errorCode.WRONG_WEIGHT });
             return
         }
@@ -347,8 +328,8 @@ tour_router.route('/saveHospitals').post(function (req, res) {
     source[id] = { name: name, host: host, statue: 0, username: admin, password: password, familyname: admin }
     var destString = JSON.stringify(source);
     util.checkRedisSessionId(req.sessionID, res, function (object) {
-        if (object.weight.indexOf('2') < 0) {
-            res.json({ ok: -1 });
+        if (object.weight.indexOf('3') < 0) {
+            res.json({ ok:g.errorCode.WRONG_WEIGHT });
             return
         }
         db.hospitals.findOne({ where: { host: host } }).then(function (data) {
@@ -382,6 +363,12 @@ tour_router.route('/saveHospitals').post(function (req, res) {
 
 tour_router.route('/delHospitals').post(function (req, res) {
     var id = req.body.id
+    util.checkRedisSessionId(req.sessionID, res, function (object) {
+        if (object.weight.indexOf('3') < 0) {
+            res.json({ ok:g.errorCode.WRONG_WEIGHT });
+            return
+        }
+    })
     db.hospitals.destroy({ where: { id: id } }).then(function (data) {
         res.json({ d: data });
     }).catch(function (err) {
@@ -500,6 +487,10 @@ tour_router.route('/save_weight_config').post(function (req, res) {
     var ud = { minweek: start, maxweek: end, type: size, con_sug: sug, con_diet: diet }
     if (id) { ud.id = id }
     util.checkRedisSessionId(req.sessionID, res, function (object) {
+        if(object.weight.indexOf('402')<0){
+            res.json({ ok: g.errorCode.WRONG_WEIGHT});
+            return
+        }
         yxdDB.weightAdvice_configs.upsert(ud).then(function (data) {
             res.json({ ok: 1, d: data });
         }).catch(function (err) {
@@ -519,6 +510,10 @@ tour_router.route('/save_diet_config').post(function (req, res) {
     if (id)
         ud.id = id
     util.checkRedisSessionId(req.sessionID, res, function (object) {
+        if(object.weight.indexOf('401')<0){
+            res.json({ ok: g.errorCode.WRONG_WEIGHT});
+            return
+        }
         yxdDB.weight_diet_configs.upsert(ud).then(function (data) {
             res.json({ ok: 1, d: data });
         }).catch(function (err) {
@@ -564,6 +559,13 @@ tour_router.route('/del_config').post(function (req, res) {
         db = yxdDB.weightAdvice_configs
     }
     util.checkRedisSessionId(req.sessionID, res, function (object) {
+        if(type==0 && object.weight.indexOf('401')<0){
+            res.json({ ok: g.errorCode.WRONG_WEIGHT});
+            return
+        }else if( object.weight.indexOf('402')<0){
+            res.json({ ok: g.errorCode.WRONG_WEIGHT});
+            return
+        }
         db.destroy({ where: { id: id } }).then(function (data) {
             res.json({ ok: 1, d: data });
         }).catch(function (err) {

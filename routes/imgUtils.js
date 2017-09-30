@@ -1,6 +1,7 @@
 var multer = require('multer');
 var mkdirp = require('mkdirp');
 var fs = require('fs');
+var g = require('../global')
 var yxdDB = require('../models_yxd');
 var mem = require('../memory')
 var util = require('../util/uitl.js')
@@ -101,6 +102,10 @@ function doInit(app){
             filter.pictures = fileStr.substr(0,fileStr.length-1)
         }
         util.checkRedisSessionId(req.sessionID, res, function (object) {
+            if (object.weight.indexOf('601')<0){
+                res.json({ok: g.errorCode.WRONG_WEIGHT});
+                return
+            }
             yxdDB.gravida_storage_configs.upsert(filter).then((data)=>{
                 mem.f.ReloadMemory('gravida_storage_configs',()=>{
                     res.json({ok: mem.m.gravida_storage_configs});
@@ -195,6 +200,10 @@ function doInit(app){
             filter.swipePic = fileStr.substr(0,fileStr.length-1)
         }
         util.checkRedisSessionId(req.sessionID, res, function (object) {
+            if (object.weight.indexOf('602')<0){
+                res.json({ok: g.errorCode.WRONG_WEIGHT});
+                return
+            }
             yxdDB.products.upsert(filter).then((data)=>{
                 res.json({ok:1});
             })

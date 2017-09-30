@@ -20,16 +20,15 @@ if (config.native == 1) {
     })
 }
 
-
-
-
 uitl.checkRedisSessionId = function (sid, res, cd) {
     if (config.native == 1) {
         client.get("sess:" + sid, function (err, object) {
             if (err) {
                 res.json({ ok: g.errorCode.WRONG_SESSION_ERROR })
             } else if (object) {
-                cd(JSON.parse(object))
+                var obj = JSON.parse(object)
+                obj.weight = obj.weight.split(',')
+                cd(obj)
             } else {
                 res.json({ ok: g.errorCode.WRONG_SESSION_ERROR })
             }
@@ -81,8 +80,11 @@ uitl.accessOutUrl = function (host, port, method, path, data, sf, ef) {
 }
 
 uitl.deletefile = function(fileName){
-    fs.exists(fileName,(exists)=>{
-        if(exists){
+    fs.stat(fileName,(err)=>{
+        if(err){
+            console.log("该文件不存在："+fileName)
+        }else{
+            console.log('文件:'+fileName+'删除失败！');
             fs.unlink(fileName,(err)=>{
                 if(err){
                     console.log('文件:'+fileName+'删除失败！');
@@ -90,8 +92,6 @@ uitl.deletefile = function(fileName){
                     console.log('文件:'+fileName+'删除成功！');
                 }
             })
-        }else{
-            console.log("该文件不存在："+fileName)
         }
     })
 }

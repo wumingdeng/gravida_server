@@ -4,6 +4,8 @@
 
 module.exports={
     Funcs:require('./Funcs'),
+    user:require('./user'),
     Storage:require('./storage'),
-    Commdata:require('./commdata')
+    Commdata:require('./commdata'),
+    platform:require('./platform')
 }

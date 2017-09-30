@@ -1,15 +1,15 @@
 {
   "apps": [
     {
-      "name": "d",
+      "name": "gravida_server",
       "script": "./index.js",
       "instances": "max",
       "exec_mode": "cluster",
       "max_memory_restart" : "700M",
-      "error_file"    : "./err.log",
-      "out_file"  : "./out.log",
-      "mergeLogs"     : true,
-      "logDateFormat" : "YYYY-MM-DD HH:mm",
+      "error_file"    : "./logs/err.log",
+      "out_file"  : "./logs/out.log",
+      "mergeLogs"     : true,w
+      "logDateFormat" : "YYYY-MM-DD HH:mm Z",
       "env": {
         "NODE_ENV": "production",
         "PORT": "3000"
